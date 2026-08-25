@@ -2893,5 +2893,13 @@ svg {
   color: var(--color-red-deep);
 }
 
+.form-field__error {
+  color: var(--color-red-deep);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  display: none;
+}
+
 
 
