@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="FoodBridge NGO Dashboard - Track meals received, people served, and claimed food rescues."
+    />
+    <title>FoodBridge | NGO Dashboard</title>
+    <!-- Inline security redirection guard to prevent unauthenticated flashing -->
+    <script>
+      (function () {
+        const userJson = sessionStorage.getItem("currentUser");
+        if (!userJson) {
+          window.location.replace("login.html");
+        } else {
+          const user = JSON.parse(userJson);
+          if (user.role !== "ngo") {
+            window.location.replace(user.role + "-dashboard.html");
+          }
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/dashboard.js"></script>
+  </head>
+  <body id="ngoDashboardBody">
+    <div class="stitch-page">
+      <!-- Fixed Brand Header -->
+      <header class="stitch-header">
+        <div class="stitch-header__inner">
+          <div class="stitch-header__brand">
+            <img
+              class="stitch-header__logo"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGFtNIlnifd3ROl4aQCxf11PeKIhg9fOrPNhn2KiKFuRLCXTz8MSxFyVCwoGel-t3cOnsFiGNn6549hJ2Ms9zdGl9_K1KkFrNjI_qUWCUiN3ty0ksedeFQARi-5iuN5QqmSmSBn_eT4BAaQOFSLVV2KpC05cgyE1zeTzj3aMMO1kOyCYMMlpFvriVi1392S2MDHmUTcgSsYWQq_g4T_m_0IKsfp9BMSB75xO1CZB5N7jCPIXffjdK7"
+              alt="FoodBridge Logo"
+            />
+            <span class="stitch-header__title" style="font-size: 20px;">NGO Dashboard</span>
+          </div>
+          <!-- Visible Logout Button -->
+          <button class="stitch-profile" id="logoutBtn" type="button" aria-label="Logout" title="Logout" style="background: var(--color-red-deep); cursor: pointer; border: 0;">
+            <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Content -->
+      <main class="stitch-main">
+        <div class="db-container">
+          
+          <!-- Greeting Header -->
+          <section style="margin-top: var(--space-2);">
+            <h1 class="db-section-title" id="userGreeting" style="font-size: 24px;">Welcome back, NGO!</h1>
+            <p style="margin: 4px 0 0; color: var(--color-text-muted); font-size: 15px;">Your rescue operations are making a difference today.</p>
+          </section>
+
+          <!-- NGO Statistics Grid -->
+          <section class="db-stats-grid" aria-label="NGO stats summary">
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-primary-soft);">
+                <span class="material-symbols-outlined" style="color: var(--color-primary);" aria-hidden="true">local_dining</span>
+              </div>
+              <div>
+                <strong id="ngoMealsCount">0</strong>
+                <span style="font-size: 11px;">Meals Recvd</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-surface-low);">
+                <span class="material-symbols-outlined" style="color: var(--color-secondary);" aria-hidden="true">groups</span>
+              </div>
+              <div>
+                <strong id="ngoPeopleCount">0</strong>
+                <span style="font-size: 11px;">People Served</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact db-stat-card--full" style="background: var(--color-primary-deep); color: #ffffff; border: 0;">
+              <div class="stat-card__icon" style="background: rgba(255,255,255,0.15); color: #ffffff;">
+                <span class="material-symbols-outlined" aria-hidden="true">co2</span>
+              </div>
+              <div>
+                <strong id="ngoCo2Count" style="color: #ffffff; font-size: 26px;">0</strong>
+                <span style="font-size: 11px; color: rgba(255,255,255,0.85); text-transform: uppercase; font-weight: 700;">CO2 Saved (kg Greenhouse Gas avoided)</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Impact Chart Card -->
+          <section class="db-chart-card">
+            <div class="db-section-header" style="margin: 0;">
+              <h3 class="db-section-title" style="font-size: 16px;">Monthly Impact</h3>
+              <a class="db-section-link" href="#" onclick="alert('Viewing full reports will be implemented in a future milestone.'); return false;">
+                <span>Full Report</span>
+                <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+              </a>
+            </div>
+            
+            <div class="db-chart">
+              <!-- Grid Background Lines -->
+              <div class="db-chart__grid-line db-chart__grid-line--1" aria-hidden="true"></div>
+              <div class="db-chart__grid-line db-chart__grid-line--2" aria-hidden="true"></div>
+              <div class="db-chart__grid-line db-chart__grid-line--3" aria-hidden="true"></div>
+
+              <!-- Bar Columns representing monthly data -->
+              <div class="db-chart__column">
+                <div class="db-chart__bar" style="height: 30%;">
+                  <span class="db-chart__tooltip">30%</span>
+                </div>
+                <span class="db-chart__label">Jan</span>
+              </div>
+
+              <div class="db-chart__column">
+                <div class="db-chart__bar" style="height: 45%;">
+                  <span class="db-chart__tooltip">45%</span>
+                </div>
+                <span class="db-chart__label">Feb</span>
+              </div>
+
+              <div class="db-chart__column">
+                <div class="db-chart__bar" style="height: 60%;">
+                  <span class="db-chart__tooltip">60%</span>
+                </div>
+                <span class="db-chart__label">Mar</span>
+              </div>
+
+              <div class="db-chart__column">
+                <div class="db-chart__bar" style="height: 55%;">
+                  <span class="db-chart__tooltip">55%</span>
+                </div>
+                <span class="db-chart__label">Apr</span>
+              </div>
+
+              <div class="db-chart__column">
+                <div class="db-chart__bar db-chart__bar--active" style="height: 85%;">
+                  <span class="db-chart__tooltip">85%</span>
+                </div>
+                <span class="db-chart__label">May</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Upcoming Pickups Feed -->
+          <section>
+            <div class="db-section-header">
+              <h2 class="db-section-title">Upcoming Pickups</h2>
+              <button class="stitch-profile" type="button" aria-label="Notifications" onclick="alert('You have 2 pending pickup requests awaiting confirmation.');" style="background: var(--color-surface-high); color: var(--color-text); border: 0; width: 32px; height: 32px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">notifications</span>
+              </button>
+            </div>
+
+            <!-- Notice warning panel from Stitch design -->
+            <div class="db-notice-banner" style="margin-bottom: var(--space-4);">
+              <span class="material-symbols-outlined" aria-hidden="true">info</span>
+              <span>2 donations near you expire in less than 2 hours.</span>
+            </div>
+            
+            <div class="db-list-feed" id="ngoUpcomingPickups">
+              <!-- Dynamically populated by dashboard.js -->
+              <div class="loading-state">
+                <span class="loading-state__dot"></span>
+                <span class="loading-state__dot"></span>
+                <span class="loading-state__dot"></span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="bottom-spacer" aria-hidden="true"></div>
+      </main>
+
+      <!-- Bottom Nav Bar -->
+      <nav class="stitch-bottom-nav" aria-label="Bottom navigation">
+        <a class="stitch-bottom-nav__item" href="index.html">
+          <span class="material-symbols-outlined" aria-hidden="true">home</span>
+          <span>Home</span>
+        </a>
+        <a class="stitch-bottom-nav__item stitch-bottom-nav__item--active" href="ngo-dashboard.html" aria-current="page">
+          <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="available-donations.html">
+          <span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span>
+          <span>Donate</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="my-requests.html">
+          <span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+          <span>Requests</span>
+        </a>
+      </nav>
+    </div>
+  </body>
+</html>

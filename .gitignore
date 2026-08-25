@@ -1,0 +1,15 @@
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node / dependency folders (for future Assessment 2)
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+
+# Local development files
+*.log

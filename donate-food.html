@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Donate Surplus Food - Form to list active surplus items for local NGO collection."
+    />
+    <title>FoodBridge | Donate Food</title>
+    <!-- Inline security redirection guard to prevent unauthenticated flashing -->
+    <script>
+      (function () {
+        const userJson = sessionStorage.getItem("currentUser");
+        if (!userJson) {
+          window.location.replace("login.html");
+        } else {
+          const user = JSON.parse(userJson);
+          if (user.role !== "donor") {
+            window.location.replace(user.role + "-dashboard.html");
+          }
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/donations.js"></script>
+  </head>
+  <body>
+    <div class="stitch-page">
+      <!-- Fixed Header Bar -->
+      <header class="stitch-header">
+        <div class="stitch-header__inner">
+          <div class="stitch-header__brand">
+            <!-- Back Button Navigation -->
+            <button class="details-hero__back-btn" onclick="window.location.href='donor-dashboard.html'" type="button" aria-label="Go Back" style="background: var(--color-surface-high); color: var(--color-text); margin-right: var(--space-2);">
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            </button>
+            <span class="stitch-header__title" style="font-size: 20px;">Donate Food</span>
+          </div>
+          <!-- Profile Badge -->
+          <div class="stitch-profile" aria-hidden="true">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Form Content Wrapper -->
+      <main class="stitch-main">
+        <div class="db-container">
+          <div style="margin-top: var(--space-2);">
+            <h1 class="db-section-title" style="font-size: 24px;">Donate Surplus</h1>
+            <p style="margin: 4px 0 0; color: var(--color-text-muted); font-size: 15px;">Post a surplus listing so local NGOs can claim and rescue it.</p>
+          </div>
+
+          <!-- Alert Error Banner -->
+          <div class="login-error-container" id="formErrorBanner" role="alert" style="margin-bottom: 0;">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            <span id="formErrorText">Please fill in all required fields marked with *</span>
+          </div>
+
+          <!-- Form Area -->
+          <form class="form-section" id="donateFoodForm" novalidate>
+            <!-- 1. Title -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodTitle">Food Title / Name *</label>
+              <div class="form-field__input-wrapper">
+                <span class="material-symbols-outlined form-field__icon" aria-hidden="true">restaurant</span>
+                <input class="form-field__input form-field__input--iconic" id="foodTitle" type="text" placeholder="e.g., Assorted Vegetable Salad Bowls" required />
+              </div>
+            </div>
+
+            <!-- 2. Category Chips Selection -->
+            <div class="form-field">
+              <span class="form-field__label">Category *</span>
+              <div class="cat-chips-group">
+                <label class="cat-chip">
+                  <input class="cat-chip__input" type="radio" name="foodCategory" value="bakery" checked />
+                  <span class="cat-chip__box">Bakery</span>
+                </label>
+                <label class="cat-chip">
+                  <input class="cat-chip__input" type="radio" name="foodCategory" value="produce" />
+                  <span class="cat-chip__box">Produce</span>
+                </label>
+                <label class="cat-chip">
+                  <input class="cat-chip__input" type="radio" name="foodCategory" value="prepared" />
+                  <span class="cat-chip__box">Prepared Meals</span>
+                </label>
+                <label class="cat-chip">
+                  <input class="cat-chip__input" type="radio" name="foodCategory" value="dairy" />
+                  <span class="cat-chip__box">Dairy &amp; Eggs</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 3. Quantity -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodQuantity">Quantity / Portions *</label>
+              <div class="form-field__input-wrapper">
+                <span class="material-symbols-outlined form-field__icon" aria-hidden="true">scale</span>
+                <input class="form-field__input form-field__input--iconic" id="foodQuantity" type="text" placeholder="e.g., 15 boxes, 10 kg" required />
+              </div>
+            </div>
+
+            <!-- 4. Expiry Available Until -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodExpiry">Expiry Date &amp; Time *</label>
+              <div class="form-field__input-wrapper">
+                <span class="material-symbols-outlined form-field__icon" aria-hidden="true">event</span>
+                <input class="form-field__input form-field__input--iconic" id="foodExpiry" type="datetime-local" required />
+              </div>
+            </div>
+
+            <!-- 5. Description -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodDescription">Description *</label>
+              <textarea class="form-field__textarea" id="foodDescription" rows="3" placeholder="Describe the item condition, freshness status, packaging details..." required></textarea>
+            </div>
+
+            <!-- 6. Pickup Location -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodLocation">Pickup Location / Address *</label>
+              <div class="form-field__input-wrapper">
+                <span class="material-symbols-outlined form-field__icon" aria-hidden="true">location_on</span>
+                <input class="form-field__input form-field__input--iconic" id="foodLocation" type="text" placeholder="e.g., Rajpura Road, Main Entry Gate" required />
+              </div>
+            </div>
+
+            <!-- 7. Pickup Instructions -->
+            <div class="form-field">
+              <label class="form-field__label" for="foodInstructions">Pickup Instructions *</label>
+              <textarea class="form-field__textarea" id="foodInstructions" rows="3" placeholder="e.g., Park at loading bay, call Maria at counter upon arrival." required></textarea>
+            </div>
+
+            <!-- 8. Photo Upload Mock -->
+            <div class="form-field">
+              <span class="form-field__label">Photo Preview</span>
+              <div class="photo-uploader" id="photoUploader">
+                <div class="photo-uploader__icon-box" id="uploadIconBox">
+                  <span class="material-symbols-outlined">add_a_photo</span>
+                </div>
+                <div class="photo-uploader__text" id="uploadText">
+                  <span>Tap to upload a photo</span><br />
+                  <span class="photo-uploader__subtext">Mock photo upload for demonstration</span>
+                </div>
+                <img class="photo-uploader__preview" id="uploadPreview" src="" alt="Upload preview" />
+                <div class="photo-uploader__overlay" id="uploadOverlay">
+                  <span class="photo-uploader__overlay-btn">Change Photo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixed Bottom Submit Banner -->
+            <div class="fixed-bottom-bar">
+              <div class="fixed-bottom-bar__inner">
+                <button class="login-submit-btn" id="postDonationSubmitBtn" type="submit" style="margin: 0;">
+                  <span>Post Donation</span>
+                  <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="h-24"></div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <!-- Script form controller -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("donateFoodForm");
+        const errorBanner = document.getElementById("formErrorBanner");
+        const errorText = document.getElementById("formErrorText");
+        
+        const uploader = document.getElementById("photoUploader");
+        const uploadPreview = document.getElementById("uploadPreview");
+        const uploadIconBox = document.getElementById("uploadIconBox");
+        const uploadText = document.getElementById("uploadText");
+        const uploadOverlay = document.getElementById("uploadOverlay");
+
+        // Mock photos selection mapping based on category to render realistically in feed
+        const MOCK_IMAGES = {
+          bakery: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7GcB2jgsu7zxUNeN4xIWtvWp3KxwHno9-9P7ez28BE5NURfqCDqPIk_n3eNgezkGDw_vHEnqU7jrhsZdrToKPpJXVK9hGN8iwtBltPUZE_bnFL8E9zrsmc7RGkkYadvPTQy5-XbHfW9FCuDDb8sTig4dO_Bq60XybEKnKGuQCtWyuWYogyKGn5TLirKYQtqUayS4_eKKXsYRJhU4O6tK9B1DYM_K3k7H3kThhWlJGCY7NIVZ4QTte",
+          produce: "https://lh3.googleusercontent.com/aida-public/AB6AXuDgz3uiCzLkyxwySsvmbrCMID7IeYrfwxGE78svIS43jJl9tfnFYr4A22mReMQuTg6XIm_93NtxTy3U0necDK2F0ln_lRGF0vQiJ-PspvacBstWLiyOFo-fORW2AjiqM9Bt-eWc6AqRVgU1qG9RPoKK57VFFEFNq30rh0VWpKUVWo7w4I2ctdHyNxjAIgz9VoYIOXy8EDchv_VCol0D5Rwy3agSn9-DmzxRm4YcmQR5CFY0JXqddRTo",
+          prepared: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMkpl4CwDdbtNNZSttASfdKrCsM3yX6ck5VMTIC-1RGVsjzMLpF3qRM-vWAvh6AHhoeXC3QQESI4hi28LJZgrJcHGgzaittwwsAenib6Sp6uaIPwatX1V89XabwKjzkksIDrE-9YdkvYsB7FHpDbrie_Y6yfQeqVRG-s1x-RUf9QA0f_avEQM2nk4Kpm7YskBO_9TkyiA6DE_tb30l5F7Wh7WQMyTVnedTJYGODvLMgQ0JEZOBmQ7K",
+          dairy: "https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"
+        };
+
+        // Simulated photo picker click
+        uploader.addEventListener("click", () => {
+          const categoryVal = document.querySelector('input[name="foodCategory"]:checked').value;
+          const mockImg = MOCK_IMAGES[categoryVal];
+          
+          uploadPreview.src = mockImg;
+          uploadPreview.classList.add("visible");
+          uploadIconBox.style.display = "none";
+          uploadText.style.display = "none";
+          uploadOverlay.classList.add("visible");
+        });
+
+        // Form validation and submit action
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          errorBanner.style.display = "none";
+
+          const title = document.getElementById("foodTitle").value.trim();
+          const category = document.querySelector('input[name="foodCategory"]:checked').value;
+          const quantity = document.getElementById("foodQuantity").value.trim();
+          const expiry = document.getElementById("foodExpiry").value;
+          const description = document.getElementById("foodDescription").value.trim();
+          const pickupLocation = document.getElementById("foodLocation").value.trim();
+          const pickupInstructions = document.getElementById("foodInstructions").value.trim();
+
+          // 1. Validation check
+          if (!title || !category || !quantity || !expiry || !description || !pickupLocation || !pickupInstructions) {
+            errorText.textContent = "Please fill out all required fields marked with *";
+            errorBanner.style.display = "flex";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+
+          // 2. Fetch authenticated user properties from session storage
+          if (typeof getCurrentUser === "function") {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+              const newDonation = {
+                id: "don-" + Date.now(),
+                title: title,
+                category: category,
+                quantity: quantity,
+                expiry: expiry,
+                description: description,
+                pickupLocation: pickupLocation,
+                pickupInstructions: pickupInstructions,
+                donorId: currentUser.id,
+                donorName: currentUser.name,
+                status: "available",
+                createdAt: new Date().toISOString(),
+                imageUrl: uploadPreview.classList.contains("visible") ? uploadPreview.src : MOCK_IMAGES[category]
+              };
+
+              // 3. Save to localStorage database via donations.js helper
+              if (typeof addDonation === "function") {
+                addDonation(newDonation);
+                alert("Donation posted successfully!");
+                window.location.href = "donor-dashboard.html";
+              } else {
+                alert("Data utilities not loaded. Please try again.");
+              }
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

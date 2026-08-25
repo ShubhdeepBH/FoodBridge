@@ -1,0 +1,185 @@
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-container": "#f7fff2", "surface-container-lowest": "#ffffff", "secondary-fixed-dim": "#adc6ff", "surface-container-low": "#eff4ff", "secondary-fixed": "#d8e2ff", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#004395", "surface-bright": "#f8f9ff", "secondary": "#0058be", "outline-variant": "#bdcaba", "primary-container": "#00873a", "on-surface-variant": "#3e4a3d", "surface-container-highest": "#d9e3f6", "background": "#f8f9ff", "on-tertiary-container": "#fffbff", "tertiary-fixed": "#ffddb8", "surface-dim": "#d0dbed", "surface-container-high": "#dee9fc", "inverse-on-surface": "#eaf1ff", "surface-tint": "#006e2d", "on-tertiary-fixed-variant": "#653e00", "on-error-container": "#93000a", "surface-variant": "#d9e3f6", "on-primary": "#ffffff", "on-secondary-container": "#fefcff", "on-primary-fixed": "#002109", "tertiary": "#825100", "outline": "#6e7b6c", "on-tertiary": "#ffffff", "on-tertiary-fixed": "#2a1700", "primary": "#006b2c", "inverse-primary": "#62df7d", "surface-container": "#e6eeff", "tertiary-fixed-dim": "#ffb95f", "on-background": "#121c2a", "error": "#ba1a1a", "primary-fixed": "#7ffc97", "surface": "#f8f9ff", "tertiary-container": "#a36700", "secondary-container": "#2170e4", "on-surface": "#121c2a", "on-secondary-fixed": "#001a42", "inverse-surface": "#27313f", "on-primary-fixed-variant": "#005320", "primary-fixed-dim": "#62df7d", "on-error": "#ffffff", "error-container": "#ffdad6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "container-max": "1280px", "md": "16px", "unit": "4px", "xl": "48px", "lg": "24px", "gutter": "24px", "margin-mobile": "16px", "sm": "8px", "xs": "4px" }, "fontFamily": { "label-sm": ["Inter"], "headline-md": ["Inter"], "label-md": ["Inter"], "body-md": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-xl": ["Inter"], "headline-lg": ["Inter"], "body-lg": ["Inter"] }, "fontSize": { "label-sm": ["12px", { "lineHeight": "1.4", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }], "label-md": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }], "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }], "headline-lg-mobile": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }], "headline-xl": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-lg": ["32px", { "lineHeight": "1.25", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }] } } } }</script><style>@layer base { .pb-safe { padding-bottom: env(safe-area-inset-bottom); } .pt-safe { padding-top: env(safe-area-inset-top); } body { -webkit-tap-highlight-color: transparent; } }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background font-body-md text-on-surface"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin-mobile flex items-center justify-between"><div class="flex items-center gap-xs"><img alt="FoodBridge Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGFtNIlnifd3ROl4aQCxf11PeKIhg9fOrPNhn2KiKFuRLCXTz8MSxFyVCwoGel-t3cOnsFiGNn6549hJ2Ms9zdGl9_K1KkFrNjI_qUWCUiN3ty0ksedeFQARi-5iuN5QqmSmSBn_eT4BAaQOFSLVV2KpC05cgyE1zeTzj3aMMO1kOyCYMMlpFvriVi1392S2MDHmUTcgSsYWQq_g4T_m_0IKsfp9BMSB75xO1CZB5N7jCPIXffjdK7"/><span class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Available Donations</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="pt-16 min-h-screen bg-background"><div class="flex flex-col w-full">
+<!-- Sticky Search and Filter Bar -->
+<div class="sticky top-16 z-40 bg-surface/90 backdrop-blur-md px-margin-mobile py-sm flex flex-col gap-sm shadow-sm">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-12 pl-12 pr-sm rounded-lg bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-primary shadow-[0_1px_4px_rgba(0,0,0,0.05)] text-body-md text-on-surface placeholder-on-surface-variant/50 transition-all" placeholder="Search surplus food..." type="text"/>
+</div>
+<!-- Filter Chips (Horizontal Scroll) -->
+<div class="flex overflow-x-auto gap-sm pb-2 no-scrollbar scroll-smooth snap-x">
+<button class="snap-start shrink-0 flex items-center gap-xs px-3 h-8 rounded-full bg-surface-container-high text-on-surface text-label-sm shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors hover:bg-surface-container-highest">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+                All Filters
+            </button>
+<button class="snap-start shrink-0 flex items-center gap-xs px-3 h-8 rounded-full bg-surface-container text-on-surface text-label-sm shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors hover:bg-surface-container-high">
+                Distance: &lt; 5km
+                <span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+<button class="snap-start shrink-0 flex items-center gap-xs px-3 h-8 rounded-full bg-primary text-on-primary text-label-sm shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-colors">
+                Vegetables
+                <span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+<button class="snap-start shrink-0 flex items-center gap-xs px-3 h-8 rounded-full bg-surface-container text-on-surface text-label-sm shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors hover:bg-surface-container-high">
+                Expiry: Today
+                <span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+<button class="snap-start shrink-0 flex items-center gap-xs px-3 h-8 rounded-full bg-surface-container text-on-surface text-label-sm shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors hover:bg-surface-container-high">
+                Bakery
+            </button>
+</div>
+</div>
+<!-- Main Feed -->
+<div class="flex flex-col gap-gutter px-margin-mobile py-lg pb-xl">
+<!-- Urgent Notice -->
+<div class="flex items-center gap-sm bg-error-container/30 text-error px-4 py-3 rounded-lg">
+<span class="material-symbols-outlined">info</span>
+<p class="text-label-md">3 donations near you expire in less than 2 hours.</p>
+</div>
+<!-- Donation Card 1 (Urgent) -->
+<div class="relative flex flex-col bg-surface-container-lowest rounded-2xl shadow-[0_4px_24px_-8px_rgba(31,41,55,0.08)] overflow-hidden transition-transform active:scale-[0.98]">
+<div class="absolute top-sm left-sm z-10 flex gap-xs">
+<span class="bg-error/90 backdrop-blur-sm text-on-error px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-[2px]">
+<span class="material-symbols-outlined text-[12px]">timer</span>
+                    Expiring Soon
+                </span>
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                    2.1 km
+                </span>
+</div>
+<div class="relative w-full h-48 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A crate of slightly bruised but perfectly edible organic heirloom tomatoes, vibrant reds and yellows, bathed in warm afternoon sunlight on a rustic wooden table, cinematic lighting, high resolution food photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgz3uiCzLkyxwySsvmbrCMID7IeYrfwxGE78svIS43jJl9tfnFYr4A22mReMQuTg6XIm_93NtxTy3U0necDK2F0ln_lRGF0vQiJ-PspvacBstWLiyOFo-fORW2AjiqM9Bt-eWc6AqRVgU1qG9RPoKK57VFFEFNq30rh0VWpKUVWo7w4I2ctdHyNxjAIgz9VoYIOXy8EDchv_VCol0D5Rwy3agSn9-DmzxRm4YcmQR5CFY0JXqddRTo"/>
+<!-- Gradient Scrim for better text legibility on bottom edge if needed -->
+<div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<div class="flex flex-col p-md gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<h3 class="text-body-lg font-headline-md text-on-surface leading-tight">Assorted Heirloom Tomatoes</h3>
+<p class="text-label-sm text-on-surface-variant mt-1 flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                            Expires in 45 mins
+                        </p>
+</div>
+<span class="bg-primary-container/20 text-primary-container px-2 py-1 rounded text-label-sm whitespace-nowrap">15 kg</span>
+</div>
+<div class="flex items-center justify-between mt-sm">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small, friendly logo for a local organic farm featuring a stylized green leaf and warm sunshine icon, minimal and clean design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzOhCdJD8n_siy_UsqXFcrWUGH7105IOglu1w0AiI-_nkOjqcJ429AM2bgGXKtneZ-KSPLejgcnyGIkoaLp3LTS5lKTf1QEUSsyFdsHh8jBU0C6xf6-_AN1sHV3uEOUZSd_Jo6K331EDp7V3wv0yVML2yCiEAGEU30QWen7wSuZYW9KFiducYCCDFYqZuxM3s0NRMaDE10jKUJpB_Vg7Y_qSZr8EDGsRay3t-8kDwEmnhuh44EcFWA"/>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md text-on-surface">Sunny Patch Farm</span>
+<div class="flex items-center gap-[2px] text-tertiary">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[12px] font-medium">4.9</span>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-sm w-full h-12 bg-primary text-on-primary rounded-xl text-label-md font-label-md shadow-[0_4px_12px_rgba(22,163,74,0.2)] active:bg-primary/90 transition-colors flex items-center justify-center gap-sm">
+                    Request Donation
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Donation Card 2 -->
+<div class="relative flex flex-col bg-surface-container-lowest rounded-2xl shadow-[0_4px_24px_-8px_rgba(31,41,55,0.08)] overflow-hidden transition-transform active:scale-[0.98]">
+<div class="absolute top-sm left-sm z-10 flex gap-xs">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                    3.4 km
+                </span>
+</div>
+<div class="relative w-full h-48 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A large woven basket overflowing with artisan sourdough bread loaves, some sliced revealing a fluffy interior, warm crusty browns, set in a brightly lit modern bakery environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7GcB2jgsu7zxUNeN4xIWtvWp3KxwHno9-9P7ez28BE5NURfqCDqPIk_n3eNgezkGDw_vHEnqU7jrhsZdrToKPpJXVK9hGN8iwtBltPUZE_bnFL8E9zrsmc7RGkkYadvPTQy5-XbHfW9FCuDDb8sTig4dO_Bq60XybEKnKGuQCtWyuWYogyKGn5TLirKYQtqUayS4_eKKXsYRJhU4O6tK9B1DYM_K3k7H3kThhWlJGCY7NIVZ4QTte"/>
+</div>
+<div class="flex flex-col p-md gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<h3 class="text-body-lg font-headline-md text-on-surface leading-tight">Day-old Artisan Sourdough</h3>
+<p class="text-label-sm text-on-surface-variant mt-1 flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            Expires tomorrow at 10 AM
+                        </p>
+</div>
+<span class="bg-primary-container/20 text-primary-container px-2 py-1 rounded text-label-sm whitespace-nowrap">20 Loaves</span>
+</div>
+<div class="flex items-center justify-between mt-sm">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist logo for a modern bakery, featuring a simple line-art wheat sheaf in a warm terracotta circle." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjzt6k5RuElfsU32HrqPw4sE2B__LKHhJg0wWAezFMB3pYCoJONSk6JMwP7nw8fWwOoRXCaKbbhIzY2TG5ex3rq8RT5hFj-QhiF7fUOE9KXDtBj_dg8U6_f6BfH_wmmEkVKR5uKEESqZQ-f5v7XBGVaYKuk2tpPNpwhO6Q9YxMt5K5yR_H7M9UCPqc7_oq2UMaPB4i-b-gBZxwchEWU7T9uWxNXgiJJBZ8GsbC2viXOzLAl1DetU-I"/>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md text-on-surface">Crumb &amp; Crust Bakery</span>
+<div class="flex items-center gap-[2px] text-tertiary">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[12px] font-medium">4.7</span>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-sm w-full h-12 bg-primary text-on-primary rounded-xl text-label-md font-label-md shadow-[0_4px_12px_rgba(22,163,74,0.2)] active:bg-primary/90 transition-colors flex items-center justify-center gap-sm">
+                    Request Donation
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Donation Card 3 -->
+<div class="relative flex flex-col bg-surface-container-lowest rounded-2xl shadow-[0_4px_24px_-8px_rgba(31,41,55,0.08)] overflow-hidden transition-transform active:scale-[0.98]">
+<div class="absolute top-sm left-sm z-10 flex gap-xs">
+<span class="bg-surface/90 backdrop-blur-sm text-on-surface px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                    5.0 km
+                </span>
+</div>
+<div class="relative w-full h-48 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Several clear plastic crates stacked neatly, filled with mixed seasonal root vegetables, carrots, turnips, and beets, clean and washed, in a brightly lit industrial kitchen setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdtB1nfS_kcKJHVQGC8nP2EZKhjHNQ9r5_iT3xDq7ypRG_y7wezGDWY7kMpxdiIRWuATGihDexLkbxdlD99RzAA6Cjo0EoiG5IG1UtB5cs9Cg-vjLE3xywdbziA-MCENbKY4ZP1-YbpBzfWrEWgtmyOUifOmS1XrTL18dKVq9MO0ipuzgN9RAZwTdl04EgmWN218GBGKiHB-UBvgRIij1IUJl_-pgLeBm8EfPjzCIjqJrm3xA5eCMx"/>
+</div>
+<div class="flex flex-col p-md gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<h3 class="text-body-lg font-headline-md text-on-surface leading-tight">Mixed Root Vegetables (B-Grade)</h3>
+<p class="text-label-sm text-on-surface-variant mt-1 flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            Expires in 3 days
+                        </p>
+</div>
+<span class="bg-primary-container/20 text-primary-container px-2 py-1 rounded text-label-sm whitespace-nowrap">50 kg</span>
+</div>
+<div class="flex items-center justify-between mt-sm">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden flex items-center justify-center bg-secondary-container text-on-secondary-container">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md text-on-surface">Fresh Distrib Co.</span>
+<div class="flex items-center gap-[2px] text-tertiary">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[12px] font-medium">5.0</span>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-sm w-full h-12 bg-primary text-on-primary rounded-xl text-label-md font-label-md shadow-[0_4px_12px_rgba(22,163,74,0.2)] active:bg-primary/90 transition-colors flex items-center justify-center gap-sm">
+                    Request Donation
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<style>
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+</style><div class="h-20 pb-safe"></div></main><nav class="fixed bottom-0 w-full z-50 bg-surface/80 backdrop-blur-xl pb-safe shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-bold"><div class="h-16 flex items-center justify-around px-sm"><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant transition-colors" data-path="landing-page" href="#"><span class="material-symbols-outlined">home</span><span class="text-label-sm font-label-sm">Home</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant transition-colors" data-path="donor-dashboard" href="#"><span class="material-symbols-outlined">dashboard</span><span class="text-label-sm font-label-sm">Dashboard</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant transition-colors" data-path="donate-food-form" href="#"><span class="material-symbols-outlined">volunteer_activism</span><span class="text-label-sm font-label-sm">Donate</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant transition-colors" data-path="my-requests" href="#"><span class="material-symbols-outlined">handshake</span><span class="text-label-sm font-label-sm">Requests</span></a></div></nav></body></html>

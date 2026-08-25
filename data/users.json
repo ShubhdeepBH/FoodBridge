@@ -1,0 +1,23 @@
+[
+  {
+    "id": "user-001",
+    "name": "Raj Hotel",
+    "email": "donor@foodbridge.com",
+    "password": "donor123",
+    "role": "donor"
+  },
+  {
+    "id": "user-002",
+    "name": "Hope Foundation",
+    "email": "ngo@foodbridge.com",
+    "password": "ngo123",
+    "role": "ngo"
+  },
+  {
+    "id": "user-003",
+    "name": "FoodBridge Admin",
+    "email": "admin@foodbridge.com",
+    "password": "admin123",
+    "role": "admin"
+  }
+]

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="FoodBridge Admin Dashboard - Monitor platform listings, verify entities, and review system activities."
+    />
+    <title>FoodBridge | Admin Dashboard</title>
+    <!-- Inline security redirection guard to prevent unauthenticated flashing -->
+    <script>
+      (function () {
+        const userJson = sessionStorage.getItem("currentUser");
+        if (!userJson) {
+          window.location.replace("login.html");
+        } else {
+          const user = JSON.parse(userJson);
+          if (user.role !== "admin") {
+            window.location.replace(user.role + "-dashboard.html");
+          }
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/dashboard.js"></script>
+  </head>
+  <body id="adminDashboardBody">
+    <div class="stitch-page">
+      <!-- Brand Header -->
+      <header class="stitch-header">
+        <div class="stitch-header__inner">
+          <div class="stitch-header__brand">
+            <img
+              class="stitch-header__logo"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGFtNIlnifd3ROl4aQCxf11PeKIhg9fOrPNhn2KiKFuRLCXTz8MSxFyVCwoGel-t3cOnsFiGNn6549hJ2Ms9zdGl9_K1KkFrNjI_qUWCUiN3ty0ksedeFQARi-5iuN5QqmSmSBn_eT4BAaQOFSLVV2KpC05cgyE1zeTzj3aMMO1kOyCYMMlpFvriVi1392S2MDHmUTcgSsYWQq_g4T_m_0IKsfp9BMSB75xO1CZB5N7jCPIXffjdK7"
+              alt="FoodBridge Logo"
+            />
+            <span class="stitch-header__title" style="font-size: 20px;">Admin Console</span>
+          </div>
+          <!-- Logout Button -->
+          <button class="stitch-profile" id="logoutBtn" type="button" aria-label="Logout" title="Logout" style="background: var(--color-red-deep); cursor: pointer; border: 0;">
+            <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Content -->
+      <main class="stitch-main">
+        <div class="db-container">
+          
+          <!-- Welcome Greeting Section -->
+          <section style="margin-top: var(--space-2);">
+            <h1 class="db-section-title" id="userGreeting" style="font-size: 24px;">Welcome back, Admin!</h1>
+            <p style="margin: 4px 0 0; color: var(--color-text-muted); font-size: 15px;">Monitoring overall surplus rescues and platform traffic logs.</p>
+          </section>
+
+          <!-- Admin statistics cards (Standard 2 column with compact metrics) -->
+          <section class="db-stats-grid" aria-label="System stats logs">
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-surface-low);">
+                <span class="material-symbols-outlined" aria-hidden="true">analytics</span>
+              </div>
+              <div>
+                <strong id="adminStatTotal">0</strong>
+                <span style="font-size: 11px;">Total Listings</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-primary-soft);">
+                <span class="material-symbols-outlined" style="color: var(--color-primary);" aria-hidden="true">hourglass_empty</span>
+              </div>
+              <div>
+                <strong id="adminStatActive" style="color: var(--color-primary);">0</strong>
+                <span style="font-size: 11px;">Active Listings</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-secondary-soft);">
+                <span class="material-symbols-outlined" style="color: var(--color-secondary);" aria-hidden="true">task_alt</span>
+              </div>
+              <div>
+                <strong id="adminStatCompleted" style="color: var(--color-secondary);">0</strong>
+                <span style="font-size: 11px;">Completed</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-surface-mid);">
+                <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+              </div>
+              <div>
+                <strong id="adminStatDonors">0</strong>
+                <span style="font-size: 11px;">Donors</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-card--compact db-stat-card--full" style="background: var(--color-surface); border: 1px solid var(--color-border);">
+              <div class="stat-card__icon" style="background: var(--color-surface-mid);">
+                <span class="material-symbols-outlined" aria-hidden="true">favorite</span>
+              </div>
+              <div>
+                <strong id="adminStatNgos">0</strong>
+                <span style="font-size: 11px;">Registered NGOs</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- System Activity List Table -->
+          <section>
+            <div class="db-section-header">
+              <h2 class="db-section-title">System Activity Logs</h2>
+            </div>
+            
+            <div class="db-table-wrapper">
+              <table class="db-table" aria-label="Recent listings log table">
+                <thead>
+                  <tr>
+                    <th>Listing</th>
+                    <th>Donor Name</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="adminRecentTableBody">
+                  <!-- Dynamically populated by dashboard.js -->
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: var(--color-text-muted);">Loading logs...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Registered Donors Directory -->
+          <section>
+            <div class="db-section-header">
+              <h2 class="db-section-title">Registered Donors</h2>
+            </div>
+            <div class="db-list-grid" id="adminDonorsGrid">
+              <!-- Dynamically populated by dashboard.js -->
+            </div>
+          </section>
+
+          <!-- Registered NGOs Directory -->
+          <section>
+            <div class="db-section-header">
+              <h2 class="db-section-title">Registered NGOs</h2>
+            </div>
+            <div class="db-list-grid" id="adminNgosGrid">
+              <!-- Dynamically populated by dashboard.js -->
+            </div>
+          </section>
+
+        </div>
+        
+        <div class="bottom-spacer" aria-hidden="true"></div>
+      </main>
+
+      <!-- Bottom Navigation Mock -->
+      <nav class="stitch-bottom-nav" aria-label="Bottom navigation">
+        <a class="stitch-bottom-nav__item" href="index.html">
+          <span class="material-symbols-outlined" aria-hidden="true">home</span>
+          <span>Home</span>
+        </a>
+        <a class="stitch-bottom-nav__item stitch-bottom-nav__item--active" href="admin-dashboard.html" aria-current="page">
+          <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+          <span>Admin Console</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="#" onclick="alert('Admin user cannot create listings.'); return false;">
+          <span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span>
+          <span>Donate</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="#" onclick="alert('Admin user cannot request collections.'); return false;">
+          <span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+          <span>Requests</span>
+        </a>
+      </nav>
+    </div>
+  </body>
+</html>

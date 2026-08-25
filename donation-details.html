@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="FoodBridge Donation Details - Review pickup times, quantity, and donor instructions."
+    />
+    <title>FoodBridge | Donation Details</title>
+    <!-- Inline security redirection guard to prevent unauthenticated flashing -->
+    <script>
+      (function () {
+        const userJson = sessionStorage.getItem("currentUser");
+        if (!userJson) {
+          window.location.replace("login.html");
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/donations.js"></script>
+  </head>
+  <body>
+    <div class="stitch-page" id="detailsPageContainer">
+      <!-- Fixed Header Bar -->
+      <header class="stitch-header" id="detailsHeader">
+        <div class="stitch-header__inner">
+          <div class="stitch-header__brand">
+            <!-- Back Button Navigation -->
+            <button class="details-hero__back-btn" onclick="goBackToFeed()" type="button" aria-label="Go Back" style="background: var(--color-surface-high); color: var(--color-text); margin-right: var(--space-2);">
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            </button>
+            <span class="stitch-header__title" style="font-size: 20px;">Donation Details</span>
+          </div>
+          <!-- Profile Badge -->
+          <div class="stitch-profile" aria-hidden="true">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main details template container -->
+      <main class="stitch-main" style="padding-top: 64px;">
+        <!-- Container for dynamic render -->
+        <div id="dynamicDetailsWrapper">
+          <!-- Loading state placeholder -->
+          <div class="db-container">
+            <div class="loading-state">
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bottom-spacer" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <!-- Script details lookup controller -->
+    <script>
+      /**
+       * Directs back to browse available page or history back.
+       */
+      function goBackToFeed() {
+        if (document.referrer && document.referrer.includes("available-donations.html")) {
+          window.location.href = "available-donations.html";
+        } else {
+          // If navigated directly, attempt to go back to relevant dashboard based on role
+          if (typeof getCurrentUser === "function") {
+            const user = getCurrentUser();
+            if (user && user.role) {
+              window.location.href = user.role === "donor" ? "donor-dashboard.html" : "available-donations.html";
+              return;
+            }
+          }
+          window.location.href = "index.html";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const detailsWrapper = document.getElementById("dynamicDetailsWrapper");
+
+        // 1. Get donation ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const donationId = urlParams.get("id");
+
+        if (!donationId) {
+          renderError("No donation listing ID specified in URL query.");
+          return;
+        }
+
+        // 2. Fetch donations array and locate matching record
+        if (typeof getDonations !== "function") {
+          renderError("Failed to initialize database utilities. Try refreshing.");
+          return;
+        }
+
+        const donations = getDonations();
+        const matchedItem = donations.find(don => don.id === donationId);
+
+        if (!matchedItem) {
+          renderError("Listing not found. The listing may have expired, been claimed, or deleted.");
+          return;
+        }
+
+        // 3. Render matched donation details
+        renderDonation(matchedItem);
+
+        /**
+         * Renders the details visual elements.
+         */
+        function renderDonation(item) {
+          const categoryLabels = {
+            bakery: "Bakery",
+            produce: "Produce",
+            prepared: "Prepared Meal",
+            dairy: "Dairy & Eggs"
+          };
+
+          const categoryIcons = {
+            bakery: "bakery_dining",
+            produce: "agriculture",
+            prepared: "local_dining",
+            dairy: "egg"
+          };
+
+          // Format relative time left
+          const expiryDate = new Date(item.expiry);
+          const timeDiff = expiryDate - new Date();
+          let expiryLabel = "Expiring soon";
+
+          if (timeDiff > 0) {
+            const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+            if (hoursLeft > 24) {
+              expiryLabel = `Expires in ${Math.floor(hoursLeft / 24)} days`;
+            } else if (hoursLeft > 0) {
+              expiryLabel = `Expires in ${hoursLeft}h`;
+            } else {
+              const minsLeft = Math.floor(timeDiff / (1000 * 60));
+              expiryLabel = `Expires in ${minsLeft} mins`;
+            }
+          } else {
+            expiryLabel = "Expired";
+          }
+
+          detailsWrapper.innerHTML = `
+            <!-- Large Image Header Section -->
+            <section class="details-hero" style="background-image: url('${item.imageUrl || ''}');">
+              <div class="details-hero__scrim"></div>
+              
+              <!-- Floating Category and Expiry badges -->
+              <div class="details-hero__badges">
+                <div class="details-hero__badge details-hero__badge--timer">
+                  <span class="material-symbols-outlined" aria-hidden="true">timer</span>
+                  <span>${expiryLabel}</span>
+                </div>
+                <div class="details-hero__badge details-hero__badge--category">
+                  <span class="material-symbols-outlined" aria-hidden="true">eco</span>
+                  <span>${categoryLabels[item.category] || item.category}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Metadata Info Grid Card overlay -->
+            <div class="db-container" style="padding-top: 0;">
+              <section class="details-info-grid">
+                <!-- Title and Quantity -->
+                <div>
+                  <h1 class="db-welcome-card__title" style="font-size: 26px; line-height: 1.25; margin-bottom: 8px;">${item.title}</h1>
+                  <p style="margin: 0; font-size: 16px; font-weight: 600; color: var(--color-primary-deep); display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">scale</span>
+                    <span>${item.quantity} Total Quantity</span>
+                  </p>
+                </div>
+
+                <!-- Donor Card -->
+                <div class="db-entity-card" style="background: var(--color-surface-low); border: 1px solid var(--color-border); padding: 12px 16px; justify-content: space-between; align-items: center;">
+                  <div class="flex items-center gap-sm">
+                    <div class="db-entity-card__avatar" style="background: var(--color-surface); width: 44px; height: 44px;">
+                      <span class="material-symbols-outlined">${categoryIcons[item.category] || 'storefront'}</span>
+                    </div>
+                    <div>
+                      <h4 class="db-entity-card__name" style="font-size: 15px;">${item.donorName}</h4>
+                      <p class="db-entity-card__email" style="font-size: 11px; font-weight: 700; color: var(--color-primary-deep); display: flex; align-items: center; gap: 2px;">
+                        <span class="material-symbols-outlined" style="font-size: 14px; font-variation-settings: 'FILL' 1;">star</span>
+                        <span>4.8 Rating • Verified Donor</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button class="db-welcome-card__btn" type="button" onclick="alert('Donor contact details will be enabled upon claim confirmation.');" style="padding: 6px 14px; font-size: 12px; box-shadow: none; border-radius: 8px;">
+                    <span>Contact</span>
+                  </button>
+                </div>
+
+                <!-- Description -->
+                <div class="details-info-section">
+                  <h3 class="details-info-section__title">Description</h3>
+                  <p class="details-info-section__body">${item.description}</p>
+                </div>
+
+                <!-- Location & Mock Map -->
+                <div class="details-info-section">
+                  <h3 class="details-info-section__title">Pickup Location</h3>
+                  <p class="details-info-section__body" style="font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-primary);">location_on</span>
+                    <span>${item.pickupLocation}</span>
+                  </p>
+                  
+                  <!-- Static Map Placeholder -->
+                  <div class="details-map" style="background-image: url('https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg');" aria-label="Mock Map Location"></div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="details-info-section" style="background: var(--color-surface-container-low); border-radius: 12px; padding: 16px;">
+                  <h3 class="details-info-section__title" style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-text-muted);">info</span>
+                    <span>Pickup Instructions</span>
+                  </h3>
+                  <p class="details-info-section__body" style="margin-top: 6px; font-size: 14px;">${item.pickupInstructions}</p>
+                </div>
+              </section>
+            </div>
+
+            <!-- Fixed Bottom Action Bar -->
+            <div class="fixed-bottom-bar">
+              <div class="fixed-bottom-bar__inner">
+                <button class="login-submit-btn" id="confirmRequestBtn" type="button" onclick="handleConfirmRequest()" style="margin: 0;">
+                  <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                  <span>Confirm Request</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        /**
+         * Renders error cards if listings are missing.
+         */
+        function renderError(message) {
+          detailsWrapper.innerHTML = `
+            <div class="db-container">
+              <div class="details-error-card">
+                <span class="material-symbols-outlined details-error-card__icon" aria-hidden="true">error</span>
+                <h2 class="db-section-title">Listing Load Error</h2>
+                <p style="color: var(--color-text-muted); font-size: 15px;">${message}</p>
+                <button class="btn btn--primary" onclick="goBackToFeed()" type="button" style="margin-top: var(--space-4);">
+                  <span class="material-symbols-outlined">arrow_back</span>
+                  <span>Back to Browse Feed</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      /**
+       * Click callback handler for request button
+       */
+      function handleConfirmRequest() {
+        alert("Donation claiming and NGO Requests histories will be implemented in the next module.");
+      }
+    </script>
+  </body>
+</html>

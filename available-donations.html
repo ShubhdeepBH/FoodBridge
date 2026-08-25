@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Available Food Donations - Browse and search active surplus food listings nearby."
+    />
+    <title>FoodBridge | Available Donations</title>
+    <!-- Inline security redirection guard to prevent unauthenticated flashing -->
+    <script>
+      (function () {
+        const userJson = sessionStorage.getItem("currentUser");
+        if (!userJson) {
+          window.location.replace("login.html");
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/donations.js"></script>
+  </head>
+  <body>
+    <div class="stitch-page">
+      <!-- Brand Header -->
+      <header class="stitch-header">
+        <div class="stitch-header__inner">
+          <div class="stitch-header__brand">
+            <!-- Back Button Navigation -->
+            <button class="details-hero__back-btn" onclick="goToDashboard()" type="button" aria-label="Go Back" style="background: var(--color-surface-high); color: var(--color-text); margin-right: var(--space-2);">
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            </button>
+            <span class="stitch-header__title" style="font-size: 20px;">Browse Listings</span>
+          </div>
+          <!-- Profile Badge -->
+          <div class="stitch-profile" aria-hidden="true">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Search & Filters (Sticky Bar) -->
+      <div class="sticky-search-wrapper">
+        <!-- Search bar -->
+        <div class="login-input-wrapper">
+          <span class="material-symbols-outlined login-input-icon" aria-hidden="true">search</span>
+          <input
+            class="login-input"
+            id="searchInput"
+            type="text"
+            placeholder="Search food, categories, or location..."
+            aria-label="Search listings"
+          />
+        </div>
+        <!-- Category Pill Row (Horizontal Scroll) -->
+        <div class="filter-chips-scroll" role="tablist" aria-label="Category Filters">
+          <button class="filter-pill filter-pill--active" id="btnFilterAll" type="button" role="tab" aria-selected="true">
+            <span class="material-symbols-outlined">tune</span>
+            <span>All</span>
+          </button>
+          <button class="filter-pill" id="btnFilterBakery" type="button" role="tab" aria-selected="false">Bakery</button>
+          <button class="filter-pill" id="btnFilterProduce" type="button" role="tab" aria-selected="false">Produce</button>
+          <button class="filter-pill" id="btnFilterPrepared" type="button" role="tab" aria-selected="false">Prepared Meals</button>
+          <button class="filter-pill" id="btnFilterDairy" type="button" role="tab" aria-selected="false">Dairy &amp; Eggs</button>
+        </div>
+      </div>
+
+      <!-- Main Feed -->
+      <main class="stitch-main" style="padding-top: 0;">
+        <div class="db-container">
+          
+          <!-- Upcoming urgent notice box -->
+          <div class="db-notice-banner" id="urgentNoticeBanner" style="display: none; margin-top: var(--space-2);">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            <span id="urgentNoticeText">Some listings expire in less than 2 hours.</span>
+          </div>
+
+          <!-- Cards container -->
+          <section class="db-list-feed" id="availableDonationsFeed" style="margin-top: var(--space-2);">
+            <!-- Loading indicator -->
+            <div class="loading-state">
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+            </div>
+          </section>
+        </div>
+
+        <div class="bottom-spacer" aria-hidden="true"></div>
+      </main>
+
+      <!-- Bottom Nav Bar -->
+      <nav class="stitch-bottom-nav" aria-label="Bottom navigation" id="ngoBottomNav" style="display: none;">
+        <a class="stitch-bottom-nav__item" href="index.html">
+          <span class="material-symbols-outlined" aria-hidden="true">home</span>
+          <span>Home</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="ngo-dashboard.html">
+          <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="stitch-bottom-nav__item stitch-bottom-nav__item--active" href="available-donations.html" aria-current="page">
+          <span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span>
+          <span>Donate</span>
+        </a>
+        <a class="stitch-bottom-nav__item" href="my-requests.html" onclick="alert('Requests history will be implemented in the next module.'); return false;">
+          <span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+          <span>Requests</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Script available feed controller -->
+    <script>
+      /**
+       * Redirects back to dashboard page corresponding to role.
+       */
+      function goToDashboard() {
+        if (typeof getCurrentUser === "function") {
+          const user = getCurrentUser();
+          if (user && user.role) {
+            window.location.href = user.role + "-dashboard.html";
+            return;
+          }
+        }
+        window.location.href = "index.html";
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const feedContainer = document.getElementById("availableDonationsFeed");
+        const searchInput = document.getElementById("searchInput");
+        const urgentBanner = document.getElementById("urgentNoticeBanner");
+        const urgentText = document.getElementById("urgentNoticeText");
+        const ngoBottomNav = document.getElementById("ngoBottomNav");
+
+        // Show NGO bottom navigation bar only if active user is NGO
+        if (typeof getCurrentUser === "function") {
+          const user = getCurrentUser();
+          if (user && user.role === "ngo") {
+            ngoBottomNav.style.display = "flex";
+          }
+        }
+
+        let selectedCategory = "all"; // bakery, produce, prepared, dairy, all
+        let searchQuery = "";
+
+        // Filter button binds
+        const filterBtns = {
+          all: document.getElementById("btnFilterAll"),
+          bakery: document.getElementById("btnFilterBakery"),
+          produce: document.getElementById("btnFilterProduce"),
+          prepared: document.getElementById("btnFilterPrepared"),
+          dairy: document.getElementById("btnFilterDairy")
+        };
+
+        Object.keys(filterBtns).forEach((cat) => {
+          const btn = filterBtns[cat];
+          if (btn) {
+            btn.addEventListener("click", () => {
+              // Toggle active styles on pill buttons
+              Object.keys(filterBtns).forEach((key) => {
+                filterBtns[key].classList.remove("filter-pill--active");
+                filterBtns[key].setAttribute("aria-selected", "false");
+              });
+              btn.classList.add("filter-pill--active");
+              btn.setAttribute("aria-selected", "true");
+              
+              selectedCategory = cat;
+              renderFeed();
+            });
+          }
+        });
+
+        // Search trigger binding
+        searchInput.addEventListener("input", (e) => {
+          searchQuery = e.target.value.toLowerCase().trim();
+          renderFeed();
+        });
+
+        /**
+         * Dynamic renderer
+         */
+        function renderFeed() {
+          if (typeof getDonations !== "function") return;
+          
+          let list = getDonations();
+
+          // 1. Only display available donations
+          list = list.filter(don => don.status === "available");
+
+          // 2. Filter by Category
+          if (selectedCategory !== "all") {
+            list = list.filter(don => don.category === selectedCategory);
+          }
+
+          // 3. Filter by Search Query (Title, Category, or Location)
+          if (searchQuery) {
+            list = list.filter((don) => {
+              return don.title.toLowerCase().includes(searchQuery) ||
+                     don.category.toLowerCase().includes(searchQuery) ||
+                     don.pickupLocation.toLowerCase().includes(searchQuery);
+            });
+          }
+
+          // 4. Sort soon-expiring listings to the top (Urgent first)
+          list.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+          // 5. Render notice banner if urgent items exist (expire in less than 2 hours)
+          const now = new Date();
+          const urgentItems = list.filter((don) => {
+            const timeDiff = new Date(don.expiry) - now;
+            return timeDiff > 0 && timeDiff < 2 * 60 * 60 * 1000; // < 2 hours in ms
+          });
+
+          if (urgentItems.length > 0) {
+            urgentText.textContent = `${urgentItems.length} donation${urgentItems.length > 1 ? 's' : ''} near you expire${urgentItems.length > 1 ? '' : 's'} in less than 2 hours.`;
+            urgentBanner.style.display = "flex";
+          } else {
+            urgentBanner.style.display = "none";
+          }
+
+          // 6. Bind list to DOM
+          feedContainer.innerHTML = "";
+
+          if (list.length === 0) {
+            feedContainer.innerHTML = `
+              <div class="empty-state">
+                <span class="material-symbols-outlined empty-state__icon" aria-hidden="true">inventory_2</span>
+                <h3 class="empty-state__title">No Donations Found</h3>
+                <p class="empty-state__body">There are no available listings matching your filters or search. Please try checking back later.</p>
+              </div>
+            `;
+            return;
+          }
+
+          list.forEach((don) => {
+            const card = document.createElement("article");
+            card.className = "donation-card";
+            card.style.width = "100%";
+            card.style.flex = "none";
+            card.style.scrollSnapAlign = "none";
+            card.style.cursor = "pointer";
+            
+            // Navigate on click
+            card.addEventListener("click", () => {
+              window.location.href = `donation-details.html?id=${don.id}`;
+            });
+
+            // Format category name for chips display
+            const categoryLabels = {
+              bakery: "Bakery",
+              produce: "Produce",
+              prepared: "Prepared Meal",
+              dairy: "Dairy & Eggs"
+            };
+
+            card.innerHTML = `
+              <div class="donation-card__image" style="background-image: url('${don.imageUrl || ''}'); height: 160px;">
+                <span style="background: var(--color-primary); color: #ffffff; border-radius: 4px; font-weight: 700; text-transform: uppercase;">
+                  ${categoryLabels[don.category] || don.category}
+                </span>
+              </div>
+              <div class="donation-card__body">
+                <h3 style="white-space: normal; overflow: visible;">${don.title}</h3>
+                <p>
+                  <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+                  ${don.pickupLocation}
+                </p>
+                <div class="donation-card__footer">
+                  <span class="expiry-chip" style="background: rgba(22, 163, 74, 0.1); color: var(--color-primary);">
+                    ${don.quantity}
+                  </span>
+                  <button type="button" aria-label="View Details">
+                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                  </button>
+                </div>
+              </div>
+            `;
+            feedContainer.appendChild(card);
+          });
+        }
+
+        // Initialize Feed
+        renderFeed();
+      });
+    </script>
+  </body>
+</html>
