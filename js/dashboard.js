@@ -240,9 +240,11 @@
    * Render statistics and upcoming pickups for NGOs
    */
   function renderNgoDashboard() {
-    // 1. Static/Dynamic NGO Calculations
+    // 1. Retrieve donations from localStorage (via getDonations), fallback to demoDonations
+    const allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+
     // Get requested items from general pool
-    const claimedList = demoDonations.filter(function (don) {
+    const claimedList = allDonations.filter(function (don) {
       return don.status === "requested";
     });
 
@@ -279,8 +281,26 @@
           const card = document.createElement("div");
           card.className = "db-item-card";
           
-          // Switch visual tags based on demo index
-          const pickupTime = index === 0 ? "Pickup today by 8:30 PM" : "Pickup tomorrow by 11:00 AM";
+          // Determine dynamic expiry / pickup timing
+          let pickupTime = item.expiryText || (index === 0 ? "Pickup today by 8:30 PM" : "Pickup tomorrow by 11:00 AM");
+          if (item.expiry) {
+            const expiryDate = new Date(item.expiry);
+            const timeDiff = expiryDate - new Date();
+            if (timeDiff > 0) {
+              const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+              if (hoursLeft > 24) {
+                pickupTime = `Pickup in ${Math.floor(hoursLeft / 24)} days`;
+              } else if (hoursLeft > 0) {
+                pickupTime = `Pickup in ${hoursLeft}h`;
+              } else {
+                const minsLeft = Math.floor(timeDiff / (1000 * 60));
+                pickupTime = `Pickup in ${minsLeft} mins`;
+              }
+            } else {
+              pickupTime = "Pickup scheduled";
+            }
+          }
+
           const statusLabel = index === 0 ? "Confirmed" : "Pending";
           const statusClass = index === 0 ? "status-chip--available" : "status-chip--urgent";
 
@@ -296,7 +316,7 @@
             <div class="db-item-card__body">
               <div>
                 <h3 class="db-item-card__title">${item.title}</h3>
-                <p class="db-item-card__meta">${item.donorName} • ${pickupTime}</p>
+                <p class="db-item-card__meta">${item.donorName || 'Local Donor'} • ${pickupTime}</p>
               </div>
               <div class="db-item-card__footer">
                 <span class="status-chip ${statusClass}">${statusLabel}</span>
