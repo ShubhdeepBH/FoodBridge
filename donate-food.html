@@ -89,7 +89,7 @@
               <span class="form-field__label">Category *</span>
               <div class="cat-chips-group">
                 <label class="cat-chip">
-                  <input class="cat-chip__input" type="radio" name="foodCategory" value="bakery" checked />
+                  <input class="cat-chip__input" type="radio" name="foodCategory" value="bakery" />
                   <span class="cat-chip__box">Bakery</span>
                 </label>
                 <label class="cat-chip">
@@ -221,6 +221,57 @@
         descriptionInput.addEventListener("input", () => {
           const length = descriptionInput.value.length;
           charCounter.textContent = `${length} / 250`;
+        });
+
+        // Clear error messages on input/change
+        const clearErrorOnInput = (inputId, errorId) => {
+          const el = document.getElementById(inputId);
+          if (el) {
+            el.addEventListener("input", () => {
+              if (el.value.trim() !== "") {
+                document.getElementById(errorId).style.display = "none";
+                checkAllErrorsResolved();
+              }
+            });
+          }
+        };
+
+        const checkAllErrorsResolved = () => {
+          const anyVisible = Array.from(document.querySelectorAll(".form-field__error")).some(el => el.style.display === "block");
+          if (!anyVisible) {
+            errorBanner.style.display = "none";
+          }
+        };
+
+        clearErrorOnInput("foodTitle", "error-foodTitle");
+        clearErrorOnInput("foodQuantity", "error-foodQuantity");
+        clearErrorOnInput("foodDescription", "error-foodDescription");
+        clearErrorOnInput("foodLocation", "error-foodLocation");
+        clearErrorOnInput("foodInstructions", "error-foodInstructions");
+
+        const foodExpiry = document.getElementById("foodExpiry");
+        if (foodExpiry) {
+          foodExpiry.addEventListener("input", () => {
+            const expiryVal = foodExpiry.value;
+            if (expiryVal) {
+              const now = new Date();
+              const selectedDate = new Date(expiryVal);
+              if (selectedDate > now) {
+                document.getElementById("error-foodExpiry").style.display = "none";
+                checkAllErrorsResolved();
+              }
+            }
+          });
+        }
+
+        const categoryRadios = document.querySelectorAll('input[name="foodCategory"]');
+        categoryRadios.forEach(radio => {
+          radio.addEventListener("change", () => {
+            if (document.querySelector('input[name="foodCategory"]:checked')) {
+              document.getElementById("error-foodCategory").style.display = "none";
+              checkAllErrorsResolved();
+            }
+          });
         });
 
         // Form reset handler
