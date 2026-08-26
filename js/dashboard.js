@@ -120,8 +120,11 @@
    * Render statistics and listings feed for Donors
    */
   function renderDonorDashboard(donorId) {
-    // 1. Filter donations for current donor
-    const myDonations = demoDonations.filter(function (don) {
+    // 1. Retrieve donations from localStorage (via getDonations), fallback to demoDonations
+    const allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+
+    // Filter donations for current donor
+    const myDonations = allDonations.filter(function (don) {
       return don.donorId === donorId;
     });
 
@@ -137,7 +140,8 @@
       return don.status === "completed";
     });
     const completedPortions = completedList.reduce(function (accumulator, currentItem) {
-      return accumulator + currentItem.quantityNum;
+      const portionNum = currentItem.quantityNum || parseInt(currentItem.quantity, 10) || 0;
+      return accumulator + portionNum;
     }, 0);
     const impactScore = completedPortions * 10 || 120; // fallback default baseline
 
@@ -185,6 +189,29 @@
             window.location.href = "donation-details.html?id=" + item.id;
           });
 
+          // Determine friendly expiry display text
+          let expiryText = item.expiryText;
+          if (!expiryText && item.expiry) {
+            const expiryDate = new Date(item.expiry);
+            const timeDiff = expiryDate - new Date();
+            if (timeDiff > 0) {
+              const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+              if (hoursLeft > 24) {
+                expiryText = `Expires in ${Math.floor(hoursLeft / 24)} days`;
+              } else if (hoursLeft > 0) {
+                expiryText = `Expires in ${hoursLeft}h`;
+              } else {
+                const minsLeft = Math.floor(timeDiff / (1000 * 60));
+                expiryText = `Expires in ${minsLeft} mins`;
+              }
+            } else {
+              expiryText = "Expired";
+            }
+          }
+          if (!expiryText) {
+            expiryText = "Expiring soon";
+          }
+
           card.innerHTML = `
             <div class="db-item-card__media" style="background-image: url('${item.imageUrl || ''}');">
               ${!item.imageUrl ? '<span class="material-symbols-outlined db-item-card__media--placeholder">local_dining</span>' : ''}
@@ -192,7 +219,7 @@
             <div class="db-item-card__body">
               <div>
                 <h3 class="db-item-card__title">${item.title}</h3>
-                <p class="db-item-card__meta">${item.quantity} • ${item.expiryText}</p>
+                <p class="db-item-card__meta">${item.quantity} • ${expiryText}</p>
               </div>
               <div class="db-item-card__footer">
                 <span class="status-chip ${statusBadgeClass}">${statusLabel}</span>
@@ -213,9 +240,11 @@
    * Render statistics and upcoming pickups for NGOs
    */
   function renderNgoDashboard() {
-    // 1. Static/Dynamic NGO Calculations
+    // 1. Retrieve donations from localStorage (via getDonations), fallback to demoDonations
+    const allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+
     // Get requested items from general pool
-    const claimedList = demoDonations.filter(function (don) {
+    const claimedList = allDonations.filter(function (don) {
       return don.status === "requested";
     });
 
@@ -252,8 +281,26 @@
           const card = document.createElement("div");
           card.className = "db-item-card";
           
-          // Switch visual tags based on demo index
-          const pickupTime = index === 0 ? "Pickup today by 8:30 PM" : "Pickup tomorrow by 11:00 AM";
+          // Determine dynamic expiry / pickup timing
+          let pickupTime = item.expiryText || (index === 0 ? "Pickup today by 8:30 PM" : "Pickup tomorrow by 11:00 AM");
+          if (item.expiry) {
+            const expiryDate = new Date(item.expiry);
+            const timeDiff = expiryDate - new Date();
+            if (timeDiff > 0) {
+              const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+              if (hoursLeft > 24) {
+                pickupTime = `Pickup in ${Math.floor(hoursLeft / 24)} days`;
+              } else if (hoursLeft > 0) {
+                pickupTime = `Pickup in ${hoursLeft}h`;
+              } else {
+                const minsLeft = Math.floor(timeDiff / (1000 * 60));
+                pickupTime = `Pickup in ${minsLeft} mins`;
+              }
+            } else {
+              pickupTime = "Pickup scheduled";
+            }
+          }
+
           const statusLabel = index === 0 ? "Confirmed" : "Pending";
           const statusClass = index === 0 ? "status-chip--available" : "status-chip--urgent";
 
@@ -269,7 +316,7 @@
             <div class="db-item-card__body">
               <div>
                 <h3 class="db-item-card__title">${item.title}</h3>
-                <p class="db-item-card__meta">${item.donorName} • ${pickupTime}</p>
+                <p class="db-item-card__meta">${item.donorName || 'Local Donor'} • ${pickupTime}</p>
               </div>
               <div class="db-item-card__footer">
                 <span class="status-chip ${statusClass}">${statusLabel}</span>
