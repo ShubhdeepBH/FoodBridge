@@ -17,6 +17,7 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const donationRoutes = require("./routes/donationRoutes");
 
 // 3. Initialize the Express application
 const app = express();
@@ -37,7 +38,8 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     description: "Backend REST API for FoodBridge Surplus Rescue Platform",
     endpoints: {
-      health: "/api/health"
+      health: "/api/health",
+      donations: "/api/donations"
     }
   });
 });
@@ -51,6 +53,9 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Mount resource routes
+app.use("/api/donations", donationRoutes);
 
 // 6. Connect Database & Start HTTP Server
 const PORT = process.env.PORT || 5000;
