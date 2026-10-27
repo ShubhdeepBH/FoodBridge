@@ -9,12 +9,14 @@
  * - REST API endpoint creation and JSON responses
  */
 
-// 1. Load environment variables from .env file into process.env
-require("dotenv").config();
+// 1. Load environment variables from server/.env file into process.env
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 // 2. Import core dependencies
 const express = require("express");
 const cors = require("cors");
+const connectDB = require("./config/db");
 
 // 3. Initialize the Express application
 const app = express();
@@ -45,14 +47,28 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     message: "FoodBridge API is running",
+    database: "connected",
     timestamp: new Date().toISOString()
   });
 });
 
-// 6. Start the HTTP Server
+// 6. Connect Database & Start HTTP Server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`FoodBridge server running on port ${PORT}`);
-  console.log(`Health check available at: http://localhost:${PORT}/api/health`);
-});
+const startServer = async () => {
+  try {
+    // Establish connection to MongoDB Atlas before accepting HTTP requests
+    await connectDB();
+
+    // Start listening only after DB connection succeeds
+    app.listen(PORT, () => {
+      console.log(`FoodBridge server running on port ${PORT}`);
+      console.log(`Health check available at: http://localhost:${PORT}/api/health`);
+    });
+  } catch (error) {
+    console.error("Failed to start server due to unexpected error:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
