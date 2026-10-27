@@ -10,6 +10,7 @@ node_modules/
 # Environment / secrets
 .env
 .env.*
+!.env.example
 
 # Local development files
 *.log
