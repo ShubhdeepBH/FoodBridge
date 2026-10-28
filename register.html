@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Create an account on FoodBridge to connect surplus food with local communities in need."
+    />
+    <title>FoodBridge | Create an Account</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/register.js"></script>
+  </head>
+  <body>
+    <div class="login-page">
+      <!-- Ambient Background Glows -->
+      <div class="login-glow-1" aria-hidden="true"></div>
+      <div class="login-glow-2" aria-hidden="true"></div>
+
+      <div class="login-wrapper">
+        <!-- Logo Header Area -->
+        <div class="login-logo-area">
+          <div class="login-logo-box">
+            <span class="material-symbols-outlined" aria-hidden="true">spa</span>
+          </div>
+          <h1 class="login-title">Join FoodBridge</h1>
+          <p class="login-subtitle">Connect surplus food with those who need it most.</p>
+        </div>
+
+        <!-- Registration Card Container -->
+        <div class="login-card">
+          <!-- Dynamic Content Block 1: Registration Form (Visible by Default) -->
+          <div id="registerFormContainer">
+            <!-- Tabs Toggle: Public Role Selector (Donor vs NGO) -->
+            <div class="login-tabs" role="tablist" aria-label="Registration Role Selector">
+              <div class="login-tab-indicator" id="tabIndicator"></div>
+              <button
+                class="login-tab-btn active"
+                id="donorTab"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="registerForm"
+              >
+                I am a Donor
+              </button>
+              <button
+                class="login-tab-btn"
+                id="ngoTab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="registerForm"
+              >
+                I am an NGO
+              </button>
+            </div>
+
+            <!-- Validation and Registration Error Banner -->
+            <div class="login-error-container" id="registerErrorBanner" role="alert">
+              <span class="material-symbols-outlined" aria-hidden="true">info</span>
+              <span id="errorMessageText">Registration error. Please check your details.</span>
+            </div>
+
+            <!-- Registration Form -->
+            <form class="login-form" id="registerForm" novalidate>
+              <!-- Full Name / Organization -->
+              <div class="login-input-group">
+                <div class="login-label-row">
+                  <label class="login-label" for="registerName">Full Name / Organization</label>
+                </div>
+                <div class="login-input-wrapper">
+                  <span class="material-symbols-outlined login-input-icon" aria-hidden="true">person</span>
+                  <input
+                    class="login-input"
+                    id="registerName"
+                    type="text"
+                    placeholder="e.g. Raj Hotel or Hope Foundation"
+                    autocomplete="name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Email Address -->
+              <div class="login-input-group">
+                <div class="login-label-row">
+                  <label class="login-label" for="registerEmail">Email Address</label>
+                </div>
+                <div class="login-input-wrapper">
+                  <span class="material-symbols-outlined login-input-icon" aria-hidden="true">mail</span>
+                  <input
+                    class="login-input"
+                    id="registerEmail"
+                    type="email"
+                    placeholder="name@organization.com"
+                    autocomplete="email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Password -->
+              <div class="login-input-group">
+                <div class="login-label-row">
+                  <label class="login-label" for="registerPassword">Password (min. 6 characters)</label>
+                </div>
+                <div class="login-input-wrapper">
+                  <span class="material-symbols-outlined login-input-icon" aria-hidden="true">lock</span>
+                  <input
+                    class="login-input"
+                    id="registerPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    autocomplete="new-password"
+                    minlength="6"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Phone (Optional) -->
+              <div class="login-input-group">
+                <div class="login-label-row">
+                  <label class="login-label" for="registerPhone">Phone Number (Optional)</label>
+                </div>
+                <div class="login-input-wrapper">
+                  <span class="material-symbols-outlined login-input-icon" aria-hidden="true">call</span>
+                  <input
+                    class="login-input"
+                    id="registerPhone"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    autocomplete="tel"
+                  />
+                </div>
+              </div>
+
+              <!-- Address (Optional) -->
+              <div class="login-input-group">
+                <div class="login-label-row">
+                  <label class="login-label" for="registerAddress">Address / Location (Optional)</label>
+                </div>
+                <div class="login-input-wrapper">
+                  <span class="material-symbols-outlined login-input-icon" aria-hidden="true">location_on</span>
+                  <input
+                    class="login-input"
+                    id="registerAddress"
+                    type="text"
+                    placeholder="e.g. 12 Station Road, Mumbai"
+                    autocomplete="street-address"
+                  />
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button class="login-submit-btn" id="registerSubmitBtn" type="submit">
+                <span>Create Account</span>
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+              </button>
+            </form>
+
+            <!-- Sign-in Redirect Link -->
+            <div class="login-footer-text">
+              <span>Already have an account?</span>
+              <a href="login.html">Sign In</a>
+            </div>
+          </div>
+
+          <!-- Dynamic Content Block 2: Success Message Card (Hidden by Default) -->
+          <div class="login-success-card" id="successCardContainer">
+            <div class="success-icon-box">
+              <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+            </div>
+            <h2 class="success-title">Account Created!</h2>
+            <div class="success-welcome" id="successWelcomeMsg">Welcome to FoodBridge!</div>
+
+            <div class="success-details">
+              <div>Email: <strong id="successUserEmail">user@example.com</strong></div>
+              <div>Role: <strong id="successUserRole" style="text-transform: capitalize;">donor</strong></div>
+              <div style="margin-top: var(--space-3); color: var(--color-primary-deep);">
+                Your account has been registered successfully. You can now sign in with your credentials to access your dashboard.
+              </div>
+            </div>
+
+            <div class="success-btn-row">
+              <a class="btn btn--primary" href="login.html" style="width: 100%; justify-content: center; text-decoration: none;">
+                <span class="material-symbols-outlined" aria-hidden="true">login</span>
+                <span>Proceed to Sign In</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
