@@ -18,6 +18,7 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const donationRoutes = require("./routes/donationRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 // 3. Initialize the Express application
 const app = express();
@@ -39,7 +40,8 @@ app.get("/", (req, res) => {
     description: "Backend REST API for FoodBridge Surplus Rescue Platform",
     endpoints: {
       health: "/api/health",
-      donations: "/api/donations"
+      donations: "/api/donations",
+      auth: "/api/auth"
     }
   });
 });
@@ -56,6 +58,7 @@ app.get("/api/health", (req, res) => {
 
 // Mount resource routes
 app.use("/api/donations", donationRoutes);
+app.use("/api/auth", authRoutes);
 
 // 6. Connect Database & Start HTTP Server
 const PORT = process.env.PORT || 5000;
