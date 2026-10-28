@@ -4,12 +4,13 @@
  * CA2 Syllabus Concepts Demonstrated:
  * - Express controller architecture (req, res separation)
  * - Asynchronous operations with async/await and try/catch
- * - Password hashing using bcrypt with salt rounds (one-way cryptographic hashing)
- * - Input validation & sanitization (name, email format, password length & byte limits)
- * - Role-Based Access Control (RBAC) security: restricting privileged roles (admin) from public registration
+ * - Password hashing and verification using bcrypt (one-way cryptographic hashing & compare)
+ * - Input validation & sanitization (body structure, email normalization, password checks)
+ * - Role-Based Access Control (RBAC) security: restricting privileged roles from public registration
  * - MongoDB duplicate key handling (error code 11000) for unique database index enforcement
- * - Standard RESTful HTTP status codes (201 Created, 400 Bad Request, 409 Conflict, 500 Internal Server Error)
- * - Information security: omitting sensitive fields (passwords, hashes) from client responses and logs
+ * - Generic authentication error handling (401 Unauthorized) to prevent account enumeration
+ * - Standard RESTful HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 409 Conflict, 500 Internal Server Error)
+ * - Information security: strictly omitting sensitive fields (passwords, hashes) from responses and logs
  */
 
 const bcrypt = require("bcrypt");
@@ -151,6 +152,81 @@ const registerUser = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Authenticate user & login
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
+const loginUser = async (req, res) => {
+  try {
+    // Guard against missing, null, array, or non-object request body
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+      return res.status(400).json({
+        message: "Invalid request body. A JSON object is required"
+      });
+    }
+
+    const { email, password } = req.body;
+
+    // Validate email presence and non-empty string
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({
+        message: "Email address is required"
+      });
+    }
+
+    // Validate password presence and non-empty string
+    if (!password || typeof password !== "string" || !password.trim()) {
+      return res.status(400).json({
+        message: "Password is required"
+      });
+    }
+
+    // Normalize email consistently with registration (trim and lowercase)
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Query user by email in database
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // If user does not exist, return generic 401 Unauthorized to prevent email enumeration
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid email or password"
+      });
+    }
+
+    // Verify submitted password against stored bcrypt hash
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    // If password does not match, return identical generic 401 Unauthorized
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password"
+      });
+    }
+
+    // Return HTTP 200 OK with safe user information only (never expose password or password hash)
+    return res.status(200).json({
+      message: "Login successful",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address
+      }
+    });
+  } catch (error) {
+    // Safe unexpected error handling without exposing stack trace or database internals
+    console.error("Error in loginUser:", error.message);
+    return res.status(500).json({
+      message: "Login failed due to a server error. Please try again later."
+    });
+  }
+};
+
 module.exports = {
-  registerUser
+  registerUser,
+  loginUser
 };
