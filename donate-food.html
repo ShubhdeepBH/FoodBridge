@@ -312,7 +312,7 @@
         });
 
         // Form validation and submit action
-        form.addEventListener("submit", (e) => {
+        form.addEventListener("submit", async (e) => {
           e.preventDefault();
           errorBanner.style.display = "none";
 
@@ -393,35 +393,126 @@
             return;
           }
 
-          // 8. Fetch authenticated user properties from session storage
-          if (typeof getCurrentUser === "function") {
-            const currentUser = getCurrentUser();
-            
-            if (currentUser) {
-              const newDonation = {
-                id: "don-" + Date.now(),
-                title: title,
-                category: category,
-                quantity: quantity,
-                expiry: expiry,
-                description: description,
-                pickupLocation: pickupLocation,
-                pickupInstructions: pickupInstructions,
-                donorId: currentUser.id,
-                donorName: currentUser.name,
-                status: "available",
-                createdAt: new Date().toISOString(),
-                imageUrl: uploadPreview.classList.contains("visible") ? uploadPreview.src : MOCK_IMAGES[category]
-              };
+          // 8. Authentication and Authorization Guard
+          const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+          const authToken = typeof getAuthToken === "function" ? getAuthToken() : null;
 
-              // 9. Save to localStorage database via donations.js helper
-              if (typeof addDonation === "function") {
-                addDonation(newDonation);
+          if (!currentUser || currentUser.role !== "donor" || !authToken || typeof authToken !== "string" || !authToken.trim()) {
+            errorText.textContent = "Authentication required. You must be signed in as a donor to post donations.";
+            errorBanner.style.display = "flex";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+
+          // 9. Manage flight state on the submit button
+          const submitBtn = document.getElementById("postDonationSubmitBtn") || form.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+          }
+
+          try {
+            // 10. Resolve the API base URL from auth.js or default
+            const baseUrl = (typeof API_BASE_URL !== "undefined")
+              ? API_BASE_URL
+              : (typeof window !== "undefined" && window.API_BASE_URL)
+                ? window.API_BASE_URL
+                : "http://localhost:5000/api";
+
+            const imageUrl = (uploadPreview && uploadPreview.classList.contains("visible") && uploadPreview.src)
+              ? uploadPreview.src
+              : (MOCK_IMAGES[category] || "");
+
+            // 11. Dispatch authenticated POST request to /donations
+            // Note: client-controlled donor, donorName, and status are not sent
+            const response = await fetch(`${baseUrl}/donations`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${authToken.trim()}`
+              },
+              body: JSON.stringify({
+                title,
+                category,
+                quantity,
+                expiry,
+                description,
+                pickupLocation,
+                pickupInstructions,
+                imageUrl
+              })
+            });
+
+            // 12. Safely parse JSON payload
+            let data = null;
+            try {
+              data = await response.json();
+            } catch (parseError) {
+              data = null;
+            }
+
+            // 13. Handle successful donation creation (HTTP 201 Created)
+            if (response.status === 201) {
+              const hasValidId = Boolean(data && (typeof data._id === "string" || (data._id && typeof data._id.toString === "function")));
+              const hasValidTitle = Boolean(data && typeof data.title === "string" && data.title.trim().length > 0);
+              const hasValidDonor = Boolean(data && (typeof data.donor === "string" || (data.donor && typeof data.donor.toString === "function")));
+              const hasValidDonorName = Boolean(data && typeof data.donorName === "string" && data.donorName.trim().length > 0);
+              const hasValidStatus = Boolean(data && typeof data.status === "string" && data.status.trim().length > 0);
+
+              if (hasValidId && hasValidTitle && hasValidDonor && hasValidDonorName && hasValidStatus) {
+                const serverId = String(data._id);
+                const serverDonorId = String(data.donor);
+
+                // Normalize server record for backward compatibility with CA1 localStorage consumers
+                const normalizedDonation = {
+                  ...data,
+                  id: serverId,
+                  donorId: serverDonorId,
+                  donorName: data.donorName,
+                  status: data.status
+                };
+
+                // Synchronize locally without failing if localStorage encounters errors
+                if (typeof addDonation === "function") {
+                  try {
+                    addDonation(normalizedDonation);
+                  } catch (storageErr) {
+                    console.error("Warning: Could not save donation to localStorage:", storageErr);
+                  }
+                }
+
                 alert("Donation posted successfully!");
                 window.location.href = "donor-dashboard.html";
-              } else {
-                alert("Data utilities not loaded. Please try again.");
+                return;
               }
+
+              // Incomplete or malformed HTTP 201 response fallback
+              errorText.textContent = "Donation created, but received an unexpected server response. Please verify in your dashboard.";
+              errorBanner.style.display = "flex";
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+
+            // 14. Handle backend validation errors (400), authentication/authorization errors (401, 403), or server errors (500)
+            if (data && data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+              errorText.textContent = data.errors.join(". ");
+            } else if (data && data.message) {
+              errorText.textContent = data.message;
+            } else {
+              errorText.textContent = `Failed to create donation (HTTP status ${response.status}). Please try again.`;
+            }
+            errorBanner.style.display = "flex";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+          } catch (error) {
+            // 15. Handle network or server offline failures gracefully
+            console.error("Donation creation error:", error.message || error);
+            errorText.textContent = "Donation service is temporarily unavailable. Please make sure the backend server is running.";
+            errorBanner.style.display = "flex";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } finally {
+            // 16. Always re-enable submit button
+            if (submitBtn) {
+              submitBtn.disabled = false;
             }
           }
         });
