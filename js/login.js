@@ -15,6 +15,7 @@
   const loginForm = document.getElementById("loginForm");
   const loginEmail = document.getElementById("loginEmail");
   const loginPassword = document.getElementById("loginPassword");
+  const loginSubmitBtn = document.getElementById("loginSubmitBtn");
   
   const loginFormContainer = document.getElementById("loginFormContainer");
   const successCardContainer = document.getElementById("successCardContainer");
@@ -77,15 +78,15 @@
   }
 
   /**
-   * Validates form input and fetches credentials for authentication.
+   * Validates form input and submits credentials to the Express backend API.
    * @param {Event} event - Form submit event
    */
   async function handleLoginSubmit(event) {
     event.preventDefault();
     hideError();
 
-    const emailValue = loginEmail.value.trim();
-    const passwordValue = loginPassword.value.trim();
+    const emailValue = loginEmail ? loginEmail.value.trim() : "";
+    const passwordValue = loginPassword ? loginPassword.value.trim() : "";
 
     // 1. Validation for empty inputs
     if (emailValue === "" || passwordValue === "") {
@@ -93,36 +94,80 @@
       return;
     }
 
+    // Determine the submit button to manage flight state
+    const submitBtn = loginSubmitBtn || (loginForm ? loginForm.querySelector('button[type="submit"]') : null);
+
+    // Disable the submit button while request is in flight to prevent duplicate submissions
+    if (submitBtn) {
+      submitBtn.disabled = true;
+    }
+
     try {
-      // 2. Fetch the mock credentials database using async/await and Fetch API
-      const response = await fetch("data/users.json");
+      // 2. Resolve the API base URL from auth.js or fallback to default
+      const baseUrl = (typeof API_BASE_URL !== "undefined")
+        ? API_BASE_URL
+        : (typeof window !== "undefined" && window.API_BASE_URL)
+          ? window.API_BASE_URL
+          : "http://localhost:5000/api";
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user database: HTTP status ${response.status}`);
-      }
-
-      const users = await response.json();
-
-      // 3. Find matching user via Array method
-      const matchedUser = users.find(function (user) {
-        return user.email === emailValue && user.password === passwordValue;
+      // 3. Send POST request to /auth/login with credentials
+      const response = await fetch(`${baseUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: emailValue,
+          password: passwordValue
+        })
       });
 
-      if (matchedUser) {
-        // 4. Save safe user info to sessionStorage
-        if (typeof saveCurrentUser === "function") {
-          saveCurrentUser(matchedUser);
-        }
-        
-        // 5. Redirect to the correct role-based dashboard
-        window.location.replace(matchedUser.role + "-dashboard.html");
-      } else {
-        showError("Invalid email or password. Please try again.");
+      // 4. Safely parse JSON response
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        data = null;
       }
 
+      // 5. Handle successful authentication (HTTP 200 OK)
+      if (response.ok) {
+        const allowedRoles = ["donor", "ngo", "admin"];
+        const hasValidUser = Boolean(data && typeof data.user === "object" && data.user !== null);
+        const hasValidToken = Boolean(data && typeof data.token === "string" && data.token.trim().length > 0);
+        const hasValidRole = Boolean(hasValidUser && typeof data.user.role === "string" && allowedRoles.includes(data.user.role));
+
+        if (hasValidUser && hasValidToken && hasValidRole) {
+          // Save safe user info and JWT token to sessionStorage
+          if (typeof saveCurrentUser === "function") {
+            saveCurrentUser(data.user, data.token);
+          }
+
+          // Redirect to the role-specific dashboard
+          window.location.replace(`${data.user.role}-dashboard.html`);
+          return;
+        }
+
+        // Response succeeded (HTTP 200) but missing required token, user, or valid role
+        showError("Authentication failed due to an invalid server response. Please try again.");
+        return;
+      }
+
+      // 6. Handle backend failure responses (e.g. 401 Unauthorized, 400 Bad Request)
+      const errorMsg = (data && data.message)
+        ? data.message
+        : "Invalid email or password. Please try again.";
+      showError(errorMsg);
+
     } catch (error) {
-      console.error("Login verification error:", error);
-      showError("Authentication service is temporarily unavailable. (" + error.message + ")");
+      // 7. Handle network or server offline errors gracefully without logging credentials
+      console.error("Login request error:", error.message || error);
+      showError("Authentication service is temporarily unavailable. Please make sure the server is running.");
+    } finally {
+      // 8. Re-enable the submit button regardless of success or failure
+      if (submitBtn) {
+        submitBtn.disabled = false;
+      }
     }
   }
 
