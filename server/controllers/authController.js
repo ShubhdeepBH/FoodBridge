@@ -5,6 +5,7 @@
  * - Express controller architecture (req, res separation)
  * - Asynchronous operations with async/await and try/catch
  * - Password hashing and verification using bcrypt (one-way cryptographic hashing & compare)
+ * - JSON Web Token (JWT) generation with payload claims (user id, role) and expiration
  * - Input validation & sanitization (body structure, email normalization, password checks)
  * - Role-Based Access Control (RBAC) security: restricting privileged roles from public registration
  * - MongoDB duplicate key handling (error code 11000) for unique database index enforcement
@@ -14,6 +15,7 @@
  */
 
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 // Number of salt rounds for bcrypt hashing (standard recommended computational cost)
@@ -153,7 +155,7 @@ const registerUser = async (req, res) => {
 };
 
 /**
- * @desc    Authenticate user & login
+ * @desc    Authenticate user & login (generates JWT)
  * @route   POST /api/auth/login
  * @access  Public
  */
@@ -205,9 +207,33 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Return HTTP 200 OK with safe user information only (never expose password or password hash)
+    // Verify JWT_SECRET is configured in environment before generating token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error("JWT_SECRET is missing from server environment");
+      return res.status(500).json({
+        message: "Authentication service misconfigured. Please contact administrator."
+      });
+    }
+
+    const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "24h";
+
+    // Sign JWT token containing user ID and role
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role
+      },
+      jwtSecret,
+      {
+        expiresIn: jwtExpiresIn
+      }
+    );
+
+    // Return HTTP 200 OK with token and safe user information only (never expose password or password hash)
     return res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         _id: user._id,
         name: user.name,
