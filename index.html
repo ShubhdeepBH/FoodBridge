@@ -22,6 +22,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/donations.js"></script>
     <script defer src="js/app.js"></script>
   </head>
   <body>
@@ -154,61 +155,19 @@
         <section class="available-section">
           <div class="section-row section-row--with-link">
             <h2>Available Now</h2>
-            <a href="#">
+            <a href="available-donations.html" onclick="window.location.href='available-donations.html';">
               View all
               <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
             </a>
           </div>
 
-          <div class="donation-scroll" aria-label="Available donations">
-            <article class="donation-card">
-              <div
-                class="donation-card__image"
-                role="img"
-                aria-label="Wooden crate filled with fresh baguettes and sourdough bread"
-                style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBDSsM5fTgAxhUrKB6oBAPShsMApxsND8MdFdtX0Ff8GntIF_kmnm567-A8vbws5nnp0jCSOnTq2E9oCeXmTpoA1x5zOER30unPB-Fmr3kRBJNTJC2FNB8USJJ_PV4pxZvkti8w8eIk08g8EAXJygZtln693zzJbWBBNcqZ5YiIQV0JhZ77x7LFxiHJv0kTH5Txywu4UoMaKANsXlK8EKUl2i98Wl2efAIhFrPFAcfYJQORq8Ee0nzd')"
-              >
-                <span>Bakery</span>
-              </div>
-              <div class="donation-card__body">
-                <h3>Fresh Baguettes &amp; Bread</h3>
-                <p>
-                  <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
-                  Le Petit Four, 1.2km
-                </p>
-                <div class="donation-card__footer">
-                  <span class="expiry-chip">Exp: Today 5PM</span>
-                  <button type="button" aria-label="View Fresh Baguettes and Bread">
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-
-            <article class="donation-card">
-              <div
-                class="donation-card__image"
-                role="img"
-                aria-label="Organic vegetable box with tomatoes, leafy greens, and carrots"
-                style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCH7G1IX-XDBhvBlwd4Kph7UmrJ6ICNxzj63B7Nv7pyYtuhPkB1lqj5pHl7VxPPGjLsWWovKqDvXjfrH1ToyFr2uzb08MzgqeSdWMoCxMDBd6F_X4vZQ9Eqgl0WOdwGYwuiK3cfA9jqlgnmYU7k17Pv0DIDSAgmEqVaZ_Bawfwh_LlEG06HKxs-kD_8IgxeikgYfGiD8cU77u23jN-DUmpoZmBanaDsp7tZ9xeZDi0utugFIxKJigyX')"
-              >
-                <span>Produce</span>
-              </div>
-              <div class="donation-card__body">
-                <h3>Mixed Organic Veggie Box</h3>
-                <p>
-                  <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
-                  Green Grocer, 2.5km
-                </p>
-                <div class="donation-card__footer">
-                  <span class="expiry-chip">Exp: Tmrw 10AM</span>
-                  <button type="button" aria-label="View Mixed Organic Veggie Box">
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-            <div class="donation-scroll__spacer" aria-hidden="true"></div>
+          <div class="donation-scroll" id="homepageDonationsFeed" aria-label="Available donations">
+            <!-- Loading state indicator while fetching live data -->
+            <div class="loading-state" id="homepageLoadingState" style="padding: var(--space-6) var(--page-margin); width: 100%; justify-content: center;">
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+              <span class="loading-state__dot"></span>
+            </div>
           </div>
         </section>
 

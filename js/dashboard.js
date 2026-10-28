@@ -2,13 +2,14 @@
  * FoodBridge Dashboard Controller
  * 
  * Manages calculations, data binding, and rendering for Donor,
- * NGO, and Admin dashboard interfaces using sessionStorage sessions.
+ * NGO, and Admin dashboard interfaces using sessionStorage sessions
+ * and the Express/MongoDB backend API data layer.
  */
 
 (function () {
   "use strict";
 
-  // Mock database representing system state for the first evaluation
+  // Mock database representing system state for fallback/demonstration
   const demoDonations = [
     {
       id: "don-001",
@@ -81,9 +82,25 @@
   ];
 
   /**
-   * Initializes the active dashboard layout based on global DOM identifiers.
+   * Safely escapes HTML entities to prevent XSS injection.
+   * @param {*} value
+   * @returns {string}
    */
-  function initDashboard() {
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  /**
+   * Initializes the active dashboard layout based on global DOM identifiers.
+   * Asynchronously fetches live backend donations with cache fallback.
+   */
+  async function initDashboard() {
     // Setup logout handler
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
@@ -101,16 +118,32 @@
       if (currentUser) {
         // Set greetings
         const greetingElement = document.getElementById("userGreeting");
-        if (greetingElement) {
+        if (greetingElement && currentUser.name) {
           greetingElement.textContent = "Welcome back, " + currentUser.name + "!";
         }
 
+        // Fetch fresh donations from backend API with fallback to localStorage / demo data
+        let allDonations = [];
+        try {
+          if (typeof fetchDonations === "function") {
+            const live = await fetchDonations();
+            allDonations = Array.isArray(live) ? live : [];
+          } else if (typeof getDonations === "function") {
+            allDonations = getDonations();
+          } else {
+            allDonations = demoDonations;
+          }
+        } catch (err) {
+          console.error("Dashboard error fetching live donations, falling back to cache:", err);
+          allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+        }
+
         if (isDonor) {
-          renderDonorDashboard(currentUser.id);
+          renderDonorDashboard(currentUser.id, allDonations);
         } else if (isNgo) {
-          renderNgoDashboard();
+          renderNgoDashboard(allDonations);
         } else if (isAdmin) {
-          renderAdminDashboard();
+          renderAdminDashboard(allDonations);
         }
       }
     }
@@ -118,32 +151,46 @@
 
   /**
    * Render statistics and listings feed for Donors
+   * @param {string} donorId
+   * @param {Array} [donationsList]
    */
-  function renderDonorDashboard(donorId) {
-    // 1. Retrieve donations from localStorage (via getDonations), fallback to demoDonations
-    const allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+  function renderDonorDashboard(donorId, donationsList) {
+    // 1. Retrieve donations from provided list, localStorage, or fallback to demoDonations
+    const allDonations = Array.isArray(donationsList)
+      ? donationsList
+      : ((typeof getDonations === "function") ? getDonations() : demoDonations);
 
-    // Filter donations for current donor
+    // Filter donations for current donor (matching donorId string or nested donor._id)
     const myDonations = allDonations.filter(function (don) {
-      return don.donorId === donorId;
+      if (!don) return false;
+      const dId = don.donorId || (don.donor && (don.donor._id || don.donor.id || don.donor));
+      return dId !== undefined && dId !== null && String(dId) === String(donorId);
     });
 
     // 2. Compute statistics using Array methods
     const totalCount = myDonations.length;
     
     const activeCount = myDonations.filter(function (don) {
-      return don.status === "available" || don.status === "requested";
+      return don && (don.status === "available" || don.status === "requested");
     }).length;
 
-    // Sum up portions using reduce for completed actions to generate a mock score
+    // Sum up portions using reduce for completed actions to generate score
     const completedList = myDonations.filter(function (don) {
-      return don.status === "completed";
+      return don && don.status === "completed";
     });
     const completedPortions = completedList.reduce(function (accumulator, currentItem) {
       const portionNum = currentItem.quantityNum || parseInt(currentItem.quantity, 10) || 0;
       return accumulator + portionNum;
     }, 0);
-    const impactScore = completedPortions * 10 || 120; // fallback default baseline
+
+    const allPortions = myDonations.reduce(function (accumulator, currentItem) {
+      const portionNum = currentItem.quantityNum || parseInt(currentItem.quantity, 10) || 0;
+      return accumulator + portionNum;
+    }, 0);
+
+    const impactScore = completedPortions > 0
+      ? (completedPortions * 10)
+      : (allPortions > 0 ? (allPortions * 10) : 0);
 
     // 3. Render statistics to DOM
     const statTotal = document.getElementById("statDonorTotal");
@@ -160,7 +207,7 @@
       activeDonationsList.innerHTML = "";
 
       const activeItems = myDonations.filter(function (don) {
-        return don.status !== "completed";
+        return don && don.status !== "completed" && don.status !== "cancelled";
       });
 
       if (activeItems.length === 0) {
@@ -185,8 +232,11 @@
           }
 
           card.style.cursor = "pointer";
+          const itemId = item.id || item._id;
           card.addEventListener("click", function () {
-            window.location.href = "donation-details.html?id=" + item.id;
+            if (itemId) {
+              window.location.href = "donation-details.html?id=" + encodeURIComponent(itemId);
+            }
           });
 
           // Determine friendly expiry display text
@@ -213,13 +263,13 @@
           }
 
           card.innerHTML = `
-            <div class="db-item-card__media" style="background-image: url('${item.imageUrl || ''}');">
+            <div class="db-item-card__media">
               ${!item.imageUrl ? '<span class="material-symbols-outlined db-item-card__media--placeholder">local_dining</span>' : ''}
             </div>
             <div class="db-item-card__body">
               <div>
-                <h3 class="db-item-card__title">${item.title}</h3>
-                <p class="db-item-card__meta">${item.quantity} • ${expiryText}</p>
+                <h3 class="db-item-card__title">${escapeHtml(item.title || '')}</h3>
+                <p class="db-item-card__meta">${escapeHtml(item.quantity || '')} • ${escapeHtml(expiryText)}</p>
               </div>
               <div class="db-item-card__footer">
                 <span class="status-chip ${statusBadgeClass}">${statusLabel}</span>
@@ -230,6 +280,22 @@
               </div>
             </div>
           `;
+
+          // Safely apply background image via DOM API (only http/https allowed)
+          if (item.imageUrl && typeof item.imageUrl === "string") {
+            try {
+              const parsedUrl = new URL(item.imageUrl.trim());
+              if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+                const mediaEl = card.querySelector(".db-item-card__media");
+                if (mediaEl) {
+                  mediaEl.style.backgroundImage = `url("${parsedUrl.href}")`;
+                }
+              }
+            } catch (urlErr) {
+              // Invalid URL - leave background unset
+            }
+          }
+
           activeDonationsList.appendChild(card);
         });
       }
@@ -237,19 +303,22 @@
   }
 
   /**
-   * Render statistics and upcoming pickups for NGOs
+   * Render statistics and available donations feed for NGOs
+   * @param {Array} [donationsList]
    */
-  function renderNgoDashboard() {
-    // 1. Retrieve donations from localStorage (via getDonations), fallback to demoDonations
-    const allDonations = (typeof getDonations === "function") ? getDonations() : demoDonations;
+  function renderNgoDashboard(donationsList) {
+    // 1. Retrieve donations from provided list, localStorage, or fallback to demoDonations
+    const allDonations = Array.isArray(donationsList)
+      ? donationsList
+      : ((typeof getDonations === "function") ? getDonations() : demoDonations);
 
-    // Get requested items from general pool
-    const claimedList = allDonations.filter(function (don) {
-      return don.status === "requested";
+    // Get available and requested items from general pool
+    const availableList = allDonations.filter(function (don) {
+      return don && (don.status === "available" || don.status === "requested");
     });
 
-    const activePickupCount = claimedList.length;
-    const totalMealsReceived = 1245; // baseline representation
+    const activePickupCount = availableList.length;
+    const totalMealsReceived = 1245; // baseline representation (claiming history not yet in backend)
     const co2SavedKg = 3.2; // in tons/kilo
 
     // Render counts
@@ -263,24 +332,46 @@
     if (countCo2) countCo2.textContent = co2SavedKg + "k";
     if (countPickups) countPickups.textContent = activePickupCount;
 
+    // Check for urgent banner in ngo-dashboard.html
+    const noticeBanner = document.querySelector(".db-notice-banner");
+    if (noticeBanner) {
+      const now = new Date();
+      const urgentCount = availableList.filter(function (don) {
+        if (!don || !don.expiry) return false;
+        const timeDiff = new Date(don.expiry) - now;
+        return timeDiff > 0 && timeDiff < 2 * 60 * 60 * 1000;
+      }).length;
+
+      if (urgentCount > 0) {
+        const textSpan = noticeBanner.querySelector("span:not(.material-symbols-outlined)") || noticeBanner.lastElementChild;
+        if (textSpan) {
+          textSpan.textContent = urgentCount + " donation" + (urgentCount > 1 ? "s" : "") + " near you expire" + (urgentCount > 1 ? "" : "s") + " in less than 2 hours.";
+        }
+        noticeBanner.style.display = "flex";
+      } else {
+        noticeBanner.style.display = "none";
+      }
+    }
+
     // 2. Render pickup cards feed
     const pickupsContainer = document.getElementById("ngoUpcomingPickups");
     if (pickupsContainer) {
       pickupsContainer.innerHTML = "";
 
-      if (claimedList.length === 0) {
+      if (availableList.length === 0) {
         pickupsContainer.innerHTML = `
           <div class="empty-state">
-            <span class="material-symbols-outlined empty-state__icon" aria-hidden="true">local_shipping</span>
-            <h3 class="empty-state__title">No Claimed Pickups</h3>
-            <p class="empty-state__body">You have no active claims. Head over to the donations search page to request surplus food.</p>
+            <span class="material-symbols-outlined empty-state__icon" aria-hidden="true">inventory_2</span>
+            <h3 class="empty-state__title">No Available Donations</h3>
+            <p class="empty-state__body">There are no available surplus food listings at the moment. Check back soon for new donations.</p>
           </div>
         `;
       } else {
-        claimedList.forEach(function (item, index) {
+        availableList.forEach(function (item, index) {
           const card = document.createElement("div");
           card.className = "db-item-card";
-          
+          card.style.cursor = "pointer";
+
           // Determine dynamic expiry / pickup timing
           let pickupTime = item.expiryText || (index === 0 ? "Pickup today by 8:30 PM" : "Pickup tomorrow by 11:00 AM");
           if (item.expiry) {
@@ -289,44 +380,70 @@
             if (timeDiff > 0) {
               const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
               if (hoursLeft > 24) {
-                pickupTime = `Pickup in ${Math.floor(hoursLeft / 24)} days`;
+                pickupTime = `Expires in ${Math.floor(hoursLeft / 24)} days`;
               } else if (hoursLeft > 0) {
-                pickupTime = `Pickup in ${hoursLeft}h`;
+                pickupTime = `Expires in ${hoursLeft}h`;
               } else {
                 const minsLeft = Math.floor(timeDiff / (1000 * 60));
-                pickupTime = `Pickup in ${minsLeft} mins`;
+                pickupTime = `Expires in ${minsLeft} mins`;
               }
             } else {
-              pickupTime = "Pickup scheduled";
+              pickupTime = "Expired";
             }
           }
 
-          const statusLabel = index === 0 ? "Confirmed" : "Pending";
-          const statusClass = index === 0 ? "status-chip--available" : "status-chip--urgent";
+          const statusLabel = item.status === "requested" ? "Requested" : "Available";
+          const statusClass = item.status === "requested" ? "status-chip--urgent" : "status-chip--available";
 
-          card.style.cursor = "pointer";
+          const itemId = item.id || item._id;
           card.addEventListener("click", function () {
-            window.location.href = "donation-details.html?id=" + item.id;
+            if (itemId) {
+              window.location.href = "donation-details.html?id=" + encodeURIComponent(itemId);
+            }
           });
 
           card.innerHTML = `
-            <div class="db-item-card__media" style="background-image: url('${item.imageUrl || ''}');">
+            <div class="db-item-card__media">
               ${!item.imageUrl ? '<span class="material-symbols-outlined db-item-card__media--placeholder">restaurant</span>' : ''}
             </div>
             <div class="db-item-card__body">
               <div>
-                <h3 class="db-item-card__title">${item.title}</h3>
-                <p class="db-item-card__meta">${item.donorName || 'Local Donor'} • ${pickupTime}</p>
+                <h3 class="db-item-card__title">${escapeHtml(item.title || '')}</h3>
+                <p class="db-item-card__meta">${escapeHtml(item.donorName || 'Local Donor')} • ${escapeHtml(pickupTime)}</p>
               </div>
               <div class="db-item-card__footer">
                 <span class="status-chip ${statusClass}">${statusLabel}</span>
-                <button type="button" class="db-item-card__action-btn" onclick="event.stopPropagation(); alert('Viewing pickup details will be implemented in a future milestone.');">
+                <button type="button" class="db-item-card__action-btn">
                   Details
                   <span class="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>
             </div>
           `;
+
+          const detailsBtn = card.querySelector(".db-item-card__action-btn");
+          if (detailsBtn && itemId) {
+            detailsBtn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              window.location.href = "donation-details.html?id=" + encodeURIComponent(itemId);
+            });
+          }
+
+          // Safely apply background image via DOM API (only http/https allowed)
+          if (item.imageUrl && typeof item.imageUrl === "string") {
+            try {
+              const parsedUrl = new URL(item.imageUrl.trim());
+              if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+                const mediaEl = card.querySelector(".db-item-card__media");
+                if (mediaEl) {
+                  mediaEl.style.backgroundImage = `url("${parsedUrl.href}")`;
+                }
+              }
+            } catch (urlErr) {
+              // Invalid URL - leave background unset
+            }
+          }
+
           pickupsContainer.appendChild(card);
         });
       }
@@ -335,35 +452,47 @@
 
   /**
    * Render overview statistics and logging feeds for Admins
+   * @param {Array} [donationsList]
    */
-  function renderAdminDashboard() {
+  function renderAdminDashboard(donationsList) {
+    const allDonations = Array.isArray(donationsList)
+      ? donationsList
+      : ((typeof getDonations === "function") ? getDonations() : demoDonations);
+
     // 1. Calculate general overview parameters using ES6/Array iteration
-    const totalDonations = demoDonations.length;
+    const totalDonations = allDonations.length;
     
-    const activeDonations = demoDonations.filter(function (don) {
-      return don.status === "available" || don.status === "requested";
+    const activeDonations = allDonations.filter(function (don) {
+      return don && (don.status === "available" || don.status === "requested");
     }).length;
     
-    const completedDonations = demoDonations.filter(function (don) {
-      return don.status === "completed";
+    const completedDonations = allDonations.filter(function (don) {
+      return don && don.status === "completed";
     }).length;
 
     const donorUsers = demoUsers.filter(function (u) { return u.role === "donor"; });
     const ngoUsers = demoUsers.filter(function (u) { return u.role === "ngo"; });
 
     // Render stats
-    document.getElementById("adminStatTotal").textContent = totalDonations;
-    document.getElementById("adminStatActive").textContent = activeDonations;
-    document.getElementById("adminStatCompleted").textContent = completedDonations;
-    document.getElementById("adminStatDonors").textContent = donorUsers.length;
-    document.getElementById("adminStatNgos").textContent = ngoUsers.length;
+    const elTotal = document.getElementById("adminStatTotal");
+    const elActive = document.getElementById("adminStatActive");
+    const elCompleted = document.getElementById("adminStatCompleted");
+    const elDonors = document.getElementById("adminStatDonors");
+    const elNgos = document.getElementById("adminStatNgos");
+
+    if (elTotal) elTotal.textContent = totalDonations;
+    if (elActive) elActive.textContent = activeDonations;
+    if (elCompleted) elCompleted.textContent = completedDonations;
+    if (elDonors) elDonors.textContent = donorUsers.length;
+    if (elNgos) elNgos.textContent = ngoUsers.length;
 
     // 2. Populate recent listing activities table
     const tableBody = document.getElementById("adminRecentTableBody");
     if (tableBody) {
       tableBody.innerHTML = "";
       
-      demoDonations.forEach(function (don) {
+      allDonations.forEach(function (don) {
+        if (!don) return;
         const row = document.createElement("tr");
         
         let badgeClass = "status-chip--available";
@@ -377,15 +506,18 @@
           labelText = "Completed";
         }
 
+        const itemId = don.id || don._id;
         row.style.cursor = "pointer";
         row.addEventListener("click", function () {
-          window.location.href = "donation-details.html?id=" + don.id;
+          if (itemId) {
+            window.location.href = "donation-details.html?id=" + encodeURIComponent(itemId);
+          }
         });
 
         row.innerHTML = `
-          <td><strong>${don.title}</strong></td>
-          <td>${don.donorName}</td>
-          <td>${don.category}</td>
+          <td><strong>${escapeHtml(don.title || '')}</strong></td>
+          <td>${escapeHtml(don.donorName || 'Anonymous')}</td>
+          <td>${escapeHtml(don.category || 'Other')}</td>
           <td><span class="status-chip ${badgeClass}">${labelText}</span></td>
         `;
         tableBody.appendChild(row);
@@ -406,8 +538,8 @@
             <span class="material-symbols-outlined">storefront</span>
           </div>
           <div>
-            <h4 class="db-entity-card__name">${u.name}</h4>
-            <p class="db-entity-card__email">${u.email}</p>
+            <h4 class="db-entity-card__name">${escapeHtml(u.name || '')}</h4>
+            <p class="db-entity-card__email">${escapeHtml(u.email || '')}</p>
           </div>
         `;
         donorsList.appendChild(donorCard);
@@ -424,8 +556,8 @@
             <span class="material-symbols-outlined">favorite</span>
           </div>
           <div>
-            <h4 class="db-entity-card__name">${u.name}</h4>
-            <p class="db-entity-card__email">${u.email}</p>
+            <h4 class="db-entity-card__name">${escapeHtml(u.name || '')}</h4>
+            <p class="db-entity-card__email">${escapeHtml(u.email || '')}</p>
           </div>
         `;
         ngosList.appendChild(ngoCard);
@@ -444,11 +576,27 @@
     window.location.replace("index.html");
   }
 
+  // Expose methods for testing and external consumers
+  if (typeof window !== "undefined") {
+    window.initDashboard = initDashboard;
+    window.renderDonorDashboard = renderDonorDashboard;
+    window.renderNgoDashboard = renderNgoDashboard;
+    window.renderAdminDashboard = renderAdminDashboard;
+  }
+  if (typeof global !== "undefined") {
+    global.initDashboard = initDashboard;
+    global.renderDonorDashboard = renderDonorDashboard;
+    global.renderNgoDashboard = renderNgoDashboard;
+    global.renderAdminDashboard = renderAdminDashboard;
+  }
+
   // Load handler
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initDashboard);
-  } else {
-    initDashboard();
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initDashboard);
+    } else {
+      initDashboard();
+    }
   }
 
 })();

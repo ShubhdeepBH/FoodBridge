@@ -157,6 +157,22 @@
 
         let selectedCategory = "all"; // bakery, produce, prepared, dairy, all
         let searchQuery = "";
+        let currentDonations = null;
+
+        /**
+         * Safely escapes HTML entities to prevent XSS injection.
+         * @param {*} value
+         * @returns {string}
+         */
+        function escapeHtml(value) {
+          if (value === null || value === undefined) return "";
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
 
         // Filter button binds
         const filterBtns = {
@@ -195,24 +211,33 @@
          * Dynamic renderer
          */
         function renderFeed() {
-          if (typeof getDonations !== "function") return;
-          
-          let list = getDonations();
+          let list;
+          if (Array.isArray(currentDonations)) {
+            list = [...currentDonations];
+          } else if (typeof getDonations === "function") {
+            list = getDonations();
+          } else {
+            list = [];
+          }
 
           // 1. Only display available donations
-          list = list.filter(don => don.status === "available");
+          list = list.filter(don => don && don.status === "available");
 
           // 2. Filter by Category
           if (selectedCategory !== "all") {
-            list = list.filter(don => don.category === selectedCategory);
+            list = list.filter(don => don && don.category === selectedCategory);
           }
 
           // 3. Filter by Search Query (Title, Category, or Location)
           if (searchQuery) {
             list = list.filter((don) => {
-              return don.title.toLowerCase().includes(searchQuery) ||
-                     don.category.toLowerCase().includes(searchQuery) ||
-                     don.pickupLocation.toLowerCase().includes(searchQuery);
+              if (!don) return false;
+              const title = (don.title || "").toLowerCase();
+              const category = (don.category || "").toLowerCase();
+              const location = (don.pickupLocation || "").toLowerCase();
+              return title.includes(searchQuery) ||
+                     category.includes(searchQuery) ||
+                     location.includes(searchQuery);
             });
           }
 
@@ -222,6 +247,7 @@
           // 5. Render notice banner if urgent items exist (expire in less than 2 hours)
           const now = new Date();
           const urgentItems = list.filter((don) => {
+            if (!don || !don.expiry) return false;
             const timeDiff = new Date(don.expiry) - now;
             return timeDiff > 0 && timeDiff < 2 * 60 * 60 * 1000; // < 2 hours in ms
           });
@@ -255,9 +281,12 @@
             card.style.scrollSnapAlign = "none";
             card.style.cursor = "pointer";
             
-            // Navigate on click
+            // Navigate on click using normalized id (or _id fallback)
+            const donationId = don.id || don._id;
             card.addEventListener("click", () => {
-              window.location.href = `donation-details.html?id=${don.id}`;
+              if (donationId) {
+                window.location.href = `donation-details.html?id=${encodeURIComponent(donationId)}`;
+              }
             });
 
             // Format category name for chips display
@@ -269,7 +298,7 @@
             };
 
             // Generate friendly expiry text and styles
-            const timeDiff = new Date(don.expiry) - new Date();
+            const timeDiff = don.expiry ? (new Date(don.expiry) - new Date()) : -1;
             const isUrgent = timeDiff > 0 && timeDiff < 2 * 60 * 60 * 1000;
             const chipStyle = isUrgent 
               ? "background: rgba(220, 38, 38, 0.1); color: var(--color-red-deep);" 
@@ -289,28 +318,28 @@
             }
 
             card.innerHTML = `
-              <div class="donation-card__image" style="background-image: url('${don.imageUrl || ''}'); height: 160px;">
+              <div class="donation-card__image" style="height: 160px;">
                 <span style="background: var(--color-primary); color: #ffffff; border-radius: 4px; font-weight: 700; text-transform: uppercase;">
-                  ${categoryLabels[don.category] || don.category}
+                  ${Object.prototype.hasOwnProperty.call(categoryLabels, don.category) ? categoryLabels[don.category] : escapeHtml(don.category || 'Other')}
                 </span>
               </div>
               <div class="donation-card__body">
-                <h3 style="white-space: normal; overflow: visible; margin-bottom: 4px;">${don.title}</h3>
+                <h3 style="white-space: normal; overflow: visible; margin-bottom: 4px;">${escapeHtml(don.title || '')}</h3>
                 <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
-                  ${don.description}
+                  ${escapeHtml(don.description || '')}
                 </p>
                 <p>
                   <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
-                  ${don.pickupLocation}
+                  ${escapeHtml(don.pickupLocation || '')}
                 </p>
                 <div class="donation-card__footer">
                   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <span class="expiry-chip" style="background: rgba(22, 163, 74, 0.1); color: var(--color-primary);">
-                      ${don.quantity}
+                      ${escapeHtml(don.quantity || '')}
                     </span>
                     <span class="expiry-chip" style="${chipStyle}">
                       <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px; vertical-align: middle;">schedule</span>
-                      <span style="vertical-align: middle;">${expiryDisplay}</span>
+                      <span style="vertical-align: middle;">${escapeHtml(expiryDisplay)}</span>
                     </span>
                   </div>
                   <button type="button" aria-label="View Details">
@@ -319,12 +348,65 @@
                 </div>
               </div>
             `;
+
+            // Validate and safely apply image URL via DOM API (only http/https allowed)
+            if (don.imageUrl && typeof don.imageUrl === "string") {
+              try {
+                const parsedUrl = new URL(don.imageUrl.trim());
+                if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+                  const imageEl = card.querySelector(".donation-card__image");
+                  if (imageEl) {
+                    imageEl.style.backgroundImage = `url("${parsedUrl.href}")`;
+                  }
+                }
+              } catch (urlErr) {
+                // Invalid URL - leave background unset
+              }
+            }
+
             feedContainer.appendChild(card);
           });
         }
 
-        // Initialize Feed
-        renderFeed();
+        /**
+         * Asynchronously loads donations from the backend API using fetchDonations()
+         * with graceful fallback to cached donations.
+         */
+        async function loadDonations() {
+          try {
+            if (typeof fetchDonations === "function") {
+              const data = await fetchDonations();
+              currentDonations = Array.isArray(data) ? data : [];
+            } else if (typeof getDonations === "function") {
+              currentDonations = getDonations();
+            } else {
+              currentDonations = [];
+            }
+          } catch (error) {
+            console.error("Error fetching live donations. Falling back to cached data:", error);
+            if (typeof getDonations === "function") {
+              currentDonations = getDonations();
+            } else {
+              currentDonations = [];
+            }
+          }
+
+          try {
+            renderFeed();
+          } catch (renderError) {
+            console.error("Error rendering donations feed:", renderError);
+            feedContainer.innerHTML = `
+              <div class="empty-state">
+                <span class="material-symbols-outlined empty-state__icon" aria-hidden="true">error_outline</span>
+                <h3 class="empty-state__title">Unable to Display Listings</h3>
+                <p class="empty-state__body">An unexpected error occurred while displaying donations. Please try refreshing.</p>
+              </div>
+            `;
+          }
+        }
+
+        // Initialize Feed asynchronously
+        loadDonations();
       });
     </script>
   </body>

@@ -92,34 +92,27 @@
         }
       }
 
+      /**
+       * Safely escapes HTML entities to prevent XSS injection.
+       * @param {*} value
+       * @returns {string}
+       */
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const detailsWrapper = document.getElementById("dynamicDetailsWrapper");
 
         // 1. Get donation ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const donationId = urlParams.get("id");
-
-        if (!donationId) {
-          renderError("No donation listing ID specified in URL query.");
-          return;
-        }
-
-        // 2. Fetch donations array and locate matching record
-        if (typeof getDonations !== "function") {
-          renderError("Failed to initialize database utilities. Try refreshing.");
-          return;
-        }
-
-        const donations = getDonations();
-        const matchedItem = donations.find(don => don.id === donationId);
-
-        if (!matchedItem) {
-          renderError("Listing not found. The listing may have expired, been claimed, or deleted.");
-          return;
-        }
-
-        // 3. Render matched donation details
-        renderDonation(matchedItem);
 
         /**
          * Renders the details visual elements.
@@ -140,8 +133,8 @@
           };
 
           // Format relative time left
-          const expiryDate = new Date(item.expiry);
-          const timeDiff = expiryDate - new Date();
+          const expiryDate = item.expiry ? new Date(item.expiry) : null;
+          const timeDiff = expiryDate ? (expiryDate - new Date()) : -1;
           let expiryLabel = "Expiring soon";
 
           if (timeDiff > 0) {
@@ -160,18 +153,18 @@
 
           detailsWrapper.innerHTML = `
             <!-- Large Image Header Section -->
-            <section class="details-hero" style="background-image: url('${item.imageUrl || ''}');">
+            <section class="details-hero">
               <div class="details-hero__scrim"></div>
               
               <!-- Floating Category and Expiry badges -->
               <div class="details-hero__badges">
                 <div class="details-hero__badge details-hero__badge--timer">
                   <span class="material-symbols-outlined" aria-hidden="true">timer</span>
-                  <span>${expiryLabel}</span>
+                  <span>${escapeHtml(expiryLabel)}</span>
                 </div>
                 <div class="details-hero__badge details-hero__badge--category">
                   <span class="material-symbols-outlined" aria-hidden="true">eco</span>
-                  <span>${categoryLabels[item.category] || item.category}</span>
+                  <span>${Object.prototype.hasOwnProperty.call(categoryLabels, item.category) ? categoryLabels[item.category] : escapeHtml(item.category || 'Other')}</span>
                 </div>
               </div>
             </section>
@@ -181,10 +174,10 @@
               <section class="details-info-grid">
                 <!-- Title and Quantity -->
                 <div>
-                  <h1 class="db-welcome-card__title" style="font-size: 26px; line-height: 1.25; margin-bottom: 8px;">${item.title}</h1>
+                  <h1 class="db-welcome-card__title" style="font-size: 26px; line-height: 1.25; margin-bottom: 8px;">${escapeHtml(item.title || '')}</h1>
                   <p style="margin: 0; font-size: 16px; font-weight: 600; color: var(--color-primary-deep); display: flex; align-items: center; gap: 6px;">
                     <span class="material-symbols-outlined" style="font-size: 20px;">scale</span>
-                    <span>${item.quantity} Total Quantity</span>
+                    <span>${escapeHtml(item.quantity || '')} Total Quantity</span>
                   </p>
                 </div>
 
@@ -192,10 +185,10 @@
                 <div class="db-entity-card" style="background: var(--color-surface-low); border: 1px solid var(--color-border); padding: 12px 16px; justify-content: space-between; align-items: center;">
                   <div class="flex items-center gap-sm">
                     <div class="db-entity-card__avatar" style="background: var(--color-surface); width: 44px; height: 44px;">
-                      <span class="material-symbols-outlined">${categoryIcons[item.category] || 'storefront'}</span>
+                      <span class="material-symbols-outlined">${Object.prototype.hasOwnProperty.call(categoryIcons, item.category) ? categoryIcons[item.category] : 'storefront'}</span>
                     </div>
                     <div>
-                      <h4 class="db-entity-card__name" style="font-size: 15px;">${item.donorName}</h4>
+                      <h4 class="db-entity-card__name" style="font-size: 15px;">${escapeHtml(item.donorName || 'Anonymous Donor')}</h4>
                       <p class="db-entity-card__email" style="font-size: 11px; font-weight: 700; color: var(--color-primary-deep); display: flex; align-items: center; gap: 2px;">
                         <span class="material-symbols-outlined" style="font-size: 14px; font-variation-settings: 'FILL' 1;">star</span>
                         <span>4.8 Rating • Verified Donor</span>
@@ -210,7 +203,7 @@
                 <!-- Description -->
                 <div class="details-info-section">
                   <h3 class="details-info-section__title">Description</h3>
-                  <p class="details-info-section__body">${item.description}</p>
+                  <p class="details-info-section__body">${escapeHtml(item.description || '')}</p>
                 </div>
 
                 <!-- Location & Mock Map -->
@@ -218,7 +211,7 @@
                   <h3 class="details-info-section__title">Pickup Location</h3>
                   <p class="details-info-section__body" style="font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 4px;">
                     <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-primary);">location_on</span>
-                    <span>${item.pickupLocation}</span>
+                    <span>${escapeHtml(item.pickupLocation || '')}</span>
                   </p>
                   
                   <!-- Static Map Placeholder -->
@@ -231,7 +224,7 @@
                     <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-text-muted);">info</span>
                     <span>Pickup Instructions</span>
                   </h3>
-                  <p class="details-info-section__body" style="margin-top: 6px; font-size: 14px;">${item.pickupInstructions}</p>
+                  <p class="details-info-section__body" style="margin-top: 6px; font-size: 14px;">${escapeHtml(item.pickupInstructions || 'No specific instructions provided.')}</p>
                 </div>
               </section>
             </div>
@@ -246,6 +239,21 @@
               </div>
             </div>
           `;
+
+          // Validate and safely apply hero image URL via DOM API (only http/https allowed)
+          if (item.imageUrl && typeof item.imageUrl === "string") {
+            try {
+              const parsedUrl = new URL(item.imageUrl.trim());
+              if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+                const heroEl = detailsWrapper.querySelector(".details-hero");
+                if (heroEl) {
+                  heroEl.style.backgroundImage = `url("${parsedUrl.href}")`;
+                }
+              }
+            } catch (urlErr) {
+              // Unset or invalid URL scheme; leave background unset
+            }
+          }
         }
 
         /**
@@ -257,7 +265,7 @@
               <div class="details-error-card">
                 <span class="material-symbols-outlined details-error-card__icon" aria-hidden="true">error</span>
                 <h2 class="db-section-title">Listing Load Error</h2>
-                <p style="color: var(--color-text-muted); font-size: 15px;">${message}</p>
+                <p style="color: var(--color-text-muted); font-size: 15px;">${escapeHtml(message)}</p>
                 <button class="btn btn--primary" onclick="goBackToFeed()" type="button" style="margin-top: var(--space-4);">
                   <span class="material-symbols-outlined">arrow_back</span>
                   <span>Back to Browse Feed</span>
@@ -266,6 +274,105 @@
             </div>
           `;
         }
+
+        /**
+         * Asynchronously loads and renders donation details.
+         * For legacy IDs, uses the cached record directly.
+         * For MongoDB ObjectIds, fetches fresh backend data when available,
+         * with graceful fallback to cached data if offline or network fails.
+         */
+        async function loadDonationDetails(id) {
+          if (!id || typeof id !== "string") {
+            renderError("No donation listing ID specified in URL query.");
+            return;
+          }
+
+          const cleanId = id.trim();
+          if (!cleanId) {
+            renderError("No donation listing ID specified in URL query.");
+            return;
+          }
+
+          const isMongoId = /^[0-9a-fA-F]{24}$/.test(cleanId);
+
+          // 1. For legacy demo IDs (e.g. don-001), load directly from cache without querying backend
+          if (!isMongoId) {
+            const cachedItem = (typeof fetchDonationById === "function")
+              ? await fetchDonationById(cleanId)
+              : ((typeof getDonations === "function") ? getDonations().find(d => (d.id && String(d.id) === cleanId) || (d._id && String(d._id) === cleanId)) : null);
+
+            if (cachedItem) {
+              renderDonation(cachedItem);
+            } else {
+              renderError("Listing not found. The listing may have expired, been claimed, or deleted.");
+            }
+            return;
+          }
+
+          // 2. For MongoDB ObjectIds, prefer fresh backend result when available
+          let freshItem = null;
+          let isNotFound = false;
+
+          try {
+            const baseUrl = (typeof API_BASE_URL !== "undefined")
+              ? API_BASE_URL
+              : (typeof window !== "undefined" && window.API_BASE_URL)
+                ? window.API_BASE_URL
+                : "http://localhost:5000/api";
+
+            const response = await fetch(`${baseUrl}/donations/${encodeURIComponent(cleanId)}`, {
+              method: "GET",
+              headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data && typeof data === "object" && !Array.isArray(data)) {
+                freshItem = (typeof normalizeDonation === "function") ? normalizeDonation(data) : data;
+
+                // Synchronize fresh record into local cache
+                if (freshItem && typeof saveDonations === "function" && typeof getDonations === "function") {
+                  const currentList = getDonations();
+                  const existingIdx = currentList.findIndex(d => (d.id && String(d.id) === freshItem.id) || (d._id && String(d._id) === freshItem._id));
+                  if (existingIdx >= 0) {
+                    currentList[existingIdx] = freshItem;
+                  } else {
+                    currentList.push(freshItem);
+                  }
+                  saveDonations(currentList);
+                }
+              }
+            } else if (response.status === 404) {
+              isNotFound = true;
+            }
+          } catch (netErr) {
+            console.error("Network error fetching live donation details. Falling back to cache:", netErr.message || netErr);
+          }
+
+          if (freshItem) {
+            renderDonation(freshItem);
+            return;
+          }
+
+          if (isNotFound) {
+            renderError("Listing not found. The listing may have expired, been claimed, or deleted.");
+            return;
+          }
+
+          // 3. Fallback to cached record if network failed or server was unreachable
+          const cachedFallback = (typeof fetchDonationById === "function")
+            ? await fetchDonationById(cleanId)
+            : ((typeof getDonations === "function") ? getDonations().find(d => (d.id && String(d.id) === cleanId) || (d._id && String(d._id) === cleanId)) : null);
+
+          if (cachedFallback) {
+            renderDonation(cachedFallback);
+          } else {
+            renderError("Listing not found or service is currently unavailable. Please check your connection and try refreshing.");
+          }
+        }
+
+        // Initialize details retrieval
+        loadDonationDetails(donationId);
       });
 
       /**
