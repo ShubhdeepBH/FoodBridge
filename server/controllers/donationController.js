@@ -4,14 +4,18 @@
  * CA2 Syllabus Concepts Demonstrated:
  * - Express controller request handlers (req, res)
  * - Asynchronous operations with async/await and try/catch
- * - Mongoose database queries (Donation.find, Donation.findById, donation.save)
+ * - Mongoose database queries (Donation.find, Donation.findById, donation.save, User.findById)
+ * - Role-Based Access Control (RBAC): enforcing donor-only write permissions (403 Forbidden)
+ * - Identity derivation from authenticated token (req.user.id) and database verification (401 Unauthorized)
+ * - Tamper resistance: ignoring client-supplied status, donor ID, and donor name
  * - Input validation using mongoose.isValidObjectId() and Mongoose schema validation
- * - Standard REST HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found, 500 Internal Server Error)
+ * - Standard REST HTTP status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error)
  * - Safe error handling avoiding stack trace or credential leakage
  */
 
 const mongoose = require("mongoose");
 const Donation = require("../models/Donation");
+const User = require("../models/User");
 
 /**
  * @desc    Get all donations
@@ -72,10 +76,33 @@ const getDonationById = async (req, res) => {
 /**
  * @desc    Create a new donation
  * @route   POST /api/donations
- * @access  Public (unauthenticated pending auth milestone)
+ * @access  Private (Authenticated donors only)
  */
 const createDonation = async (req, res) => {
   try {
+    // 1. Role Authorization: Only authenticated users with role 'donor' can create listings
+    if (req.user.role !== "donor") {
+      return res.status(403).json({
+        message: "Access forbidden. Only donors can create donations"
+      });
+    }
+
+    // 2. Guard against missing, null, array, or non-object request body
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+      return res.status(400).json({
+        message: "Invalid request body. A JSON object is required"
+      });
+    }
+
+    // 3. User Existence Verification: Ensure authenticated user still exists in database
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({
+        message: "User account not found. Authorization denied"
+      });
+    }
+
+    // 4. Extract only allowed client fields (client-supplied donor, donorName, and status are discarded)
     const {
       title,
       category,
@@ -84,13 +111,10 @@ const createDonation = async (req, res) => {
       description,
       pickupLocation,
       pickupInstructions,
-      donor,
-      donorName,
-      imageUrl,
-      status
+      imageUrl
     } = req.body;
 
-    // Instantiate new donation document
+    // 5. Instantiate new donation document using authenticated identity and default status
     const donation = new Donation({
       title,
       category,
@@ -99,16 +123,16 @@ const createDonation = async (req, res) => {
       description,
       pickupLocation,
       pickupInstructions,
-      donor,
-      donorName,
-      imageUrl,
-      status
+      imageUrl: typeof imageUrl === "string" ? imageUrl.trim() : "",
+      donor: req.user.id,
+      donorName: user.name,
+      status: "available"
     });
 
-    // Save to database (triggers Mongoose schema validation)
+    // 6. Save to database (triggers Mongoose schema validation)
     const savedDonation = await donation.save();
 
-    // Return HTTP 201 Created with saved record
+    // 7. Return HTTP 201 Created with saved record
     return res.status(201).json(savedDonation);
   } catch (error) {
     // Mongoose schema validation error (missing required fields, enum mismatch, maxlength exceeded)
@@ -120,7 +144,7 @@ const createDonation = async (req, res) => {
       });
     }
 
-    // Mongoose cast error (e.g. invalid ObjectId format for donor or malformed Date)
+    // Mongoose cast error (e.g. malformed Date)
     if (error.name === "CastError") {
       return res.status(400).json({
         message: `Invalid value for field '${error.path}'`
