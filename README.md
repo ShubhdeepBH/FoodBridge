@@ -6,7 +6,7 @@ FoodBridge is a frontend-based surplus food rescue platform that connects food d
 
 
 
-\## Project Objective
+\## Project Objectiven   
 
 
 
