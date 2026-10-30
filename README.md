@@ -26,7 +26,7 @@ The goal of FoodBridge is to provide a simple platform where:
 
 
 
-\## Assessment 1 Technology Stack
+\## Assessment 1 Technology Stack     
 
 
 
